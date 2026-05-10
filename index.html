@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#0f172a">
-<link rel="manifest" href="manifest.json">
+<link rel="manifest" href="/manifest.json">
 <title>Catat Duit</title>
 
 <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
@@ -79,6 +79,9 @@ canvas { max-width: 100%; }
   padding: 2px 6px; border-radius: 4px;
 }
 img.proof { max-width: 100px; max-height: 100px; border-radius: 6px; cursor: pointer; }
+.loading {
+  text-align: center; padding: 20px; opacity: 0.8;
+}
 </style>
 </head>
 <body>
@@ -118,6 +121,12 @@ img.proof { max-width: 100px; max-height: 100px; border-radius: 6px; cursor: poi
     </div>
 
     <div class="box">
+      <h3>Upload Struk - Auto Catat</h3>
+      <input type="file" id="receiptUpload" accept="image/*" capture="environment">
+      <div id="scanStatus" class="hidden loading">Sedang membaca struk...</div>
+    </div>
+
+    <div class="box">
       <h3>Budget Limit</h3>
       <div id="budgetList"></div>
       <input type="number" id="budgetAmount" placeholder="Set limit pengeluaran bulan ini">
@@ -144,7 +153,7 @@ img.proof { max-width: 100px; max-height: 100px; border-radius: 6px; cursor: poi
     </div>
 
     <div class="box">
-      <h3>Tambah/Edit Transaksi</h3>
+      <h3>Tambah/Edit Transaksi Manual</h3>
       <input type="hidden" id="editId">
       <select id="type">
         <option value="income">Pemasukan</option>
@@ -154,7 +163,6 @@ img.proof { max-width: 100px; max-height: 100px; border-radius: 6px; cursor: poi
       <input type="text" id="desc" placeholder="Keterangan opsional">
       <input type="number" id="amount" placeholder="Jumlah">
       <input type="date" id="txDate">
-      <input type="file" id="proof" accept="image/*">
       <button id="btnAdd">Simpan</button>
       <button id="btnCancelEdit" class="ghost hidden">Batal Edit</button>
     </div>
@@ -185,7 +193,7 @@ img.proof { max-width: 100px; max-height: 100px; border-radius: 6px; cursor: poi
 
   const formatYen = (num) => new Intl.NumberFormat('ja-JP', {
     style: 'currency', currency: 'JPY', maximumFractionDigits: 0
-  }).format(num);
+  }).format(num || 0);
 
   const getToday = () => new Date().toISOString().split('T')[0];
   const getMonth = () => new Date().toISOString().slice(0, 7);
@@ -201,7 +209,7 @@ img.proof { max-width: 100px; max-height: 100px; border-radius: 6px; cursor: poi
     document.documentElement.setAttribute('data-theme', next);
     localStorage.setItem(themeKey, next);
     updateThemeButtons(next);
-    if (chartInstance) drawChart(window._chartData);
+    if (chartInstance) drawChart(window._chartData || {});
   }
   function updateThemeButtons(theme) {
     const icon = theme === 'dark'? '🌙' : '☀️';
@@ -222,6 +230,9 @@ img.proof { max-width: 100px; max-height: 100px; border-radius: 6px; cursor: poi
     document.getElementById(id).oninput = renderTransactions;
   });
 
+  // Auto scan receipt on file select
+  document.getElementById('receiptUpload').onchange = handleReceiptUpload;
+
   function populateCategories() {
     const type = document.getElementById('type').value;
     const catSelect = document.getElementById('category');
@@ -241,7 +252,7 @@ img.proof { max-width: 100px; max-height: 100px; border-radius: 6px; cursor: poi
     return `${g} ${name}-san`;
   }
   function getDisplayName(user) {
-    return user.user_metadata?.name || user.email.split('@')[0];
+    return user?.user_metadata?.name || user?.email?.split('@')[0] || 'User';
   }
 
   async function checkUser() {
@@ -299,15 +310,109 @@ img.proof { max-width: 100px; max-height: 100px; border-radius: 6px; cursor: poi
     document.getElementById('appPage').classList.add('hidden');
   }
 
+  // Auto scan receipt and create transaction
+  async function handleReceiptUpload(e) {
+    const file = e.target.files[0];
+    if (!file ||!file.type.startsWith('image/')) return;
+
+    document.getElementById('scanStatus').classList.remove('hidden');
+
+    try {
+      // Upload to storage first
+      const path = `${currentUser.id}/${Date.now()}_${file.name}`;
+      const { data: uploadData, error: uploadError } = await supabase.storage
+       .from('proofs')
+       .upload(path, file);
+
+      if (uploadError) throw uploadError;
+
+      // OCR the image
+      const { data: ocr } = await Tesseract.recognize(file, 'jpn+eng');
+      const text = ocr?.data?.text || '';
+
+      // Parse amount, date, store name from text
+      const parsed = parseReceiptText(text);
+
+      // Auto create transaction
+      const payload = {
+        user_id: currentUser.id,
+        type: 'expense',
+        category: parsed.category || 'Belanja',
+        "desc": parsed.store || text.split('\n')[0].slice(0, 50),
+        amount: parsed.amount || 0,
+        created_at: parsed.date || getToday(),
+        proof_url: uploadData.path
+      };
+
+      if (payload.amount > 0) {
+        const { error } = await supabase.from('transactions').insert([payload]);
+        if (error) throw error;
+
+        alert(`Berhasil! ${payload.desc} - ${formatYen(payload.amount)}`);
+        loadTransactions();
+        loadBudget();
+        document.getElementById('receiptUpload').value = '';
+      } else {
+        alert('Gagal baca total. Coba foto yang lebih jelas.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Gagal scan struk: ' + err.message);
+    } finally {
+      document.getElementById('scanStatus').classList.add('hidden');
+    }
+  }
+
+  // Simple OCR parser for Japanese receipts
+  function parseReceiptText(text) {
+    let amount = 0;
+    let date = getToday();
+    let store = 'Struk';
+    let category = 'Belanja';
+
+    // Find amount: look for "合計", "Total", "¥", "￥" followed by numbers
+    const amountMatches = text.match(/(合計|Total|¥|￥)\s*([\d,]+)/g);
+    if (amountMatches) {
+      const lastMatch = amountMatches[amountMatches.length - 1];
+      const numStr = lastMatch.replace(/[^0-9]/g, '');
+      amount = parseInt(numStr) || 0;
+    }
+
+    // Find date: YYYY/MM/DD or YYYY-MM-DD
+    const dateMatch = text.match(/(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+    if (dateMatch) {
+      const y = dateMatch[1];
+      const m = dateMatch[2].padStart(2, '0');
+      const d = dateMatch[3].padStart(2, '0');
+      date = `${y}-${m}-${d}`;
+    }
+
+    // Guess category from store name
+    const storeLine = text.split('\n')[0].toLowerCase();
+    if (storeLine.includes('konbini') || storeLine.includes('lawson') || storeLine.includes('family')) {
+      category = 'Makanan';
+    } else if (storeLine.includes('train') || storeLine.includes('jr') || storeLine.includes('metro')) {
+      category = 'Transport';
+    }
+    store = text.split('\n')[0].slice(0, 30).trim();
+
+    return { amount, date, store, category };
+  }
+
   // Budget
   async function loadBudget() {
     const month = getMonth();
-    const { data } = await supabase.from('budgets').select('amount').eq('user_id', currentUser.id).eq('month', month).single();
+    const { data } = await supabase
+   .from('budgets')
+   .select('amount')
+   .eq('user_id', currentUser.id)
+   .eq('month', month)
+   .maybeSingle();
     currentBudget = data?.amount || 0;
     renderBudget();
   }
   document.getElementById('btnSetBudget').onclick = async () => {
-    const amount = parseFloat(document.getElementById('budgetAmount').value);
+    const amount = parseFloat(document.getElementById('budgetAmount').value) || 0;
     const month = getMonth();
     await supabase.from('budgets').upsert({user_id: currentUser.id, month, amount});
     currentBudget = amount;
@@ -315,8 +420,8 @@ img.proof { max-width: 100px; max-height: 100px; border-radius: 6px; cursor: poi
     loadTransactions();
   };
   function renderBudget() {
-    const spent = allTransactions.filter(t => t.type === 'expense' && t.created_at.startsWith(getMonth()))
-     .reduce((a, b) => a + b.amount, 0);
+    const spent = allTransactions.filter(t => t.type === 'expense' && t.created_at && t.created_at.startsWith(getMonth()))
+   .reduce((a, b) => a + (b.amount || 0), 0);
     const percent = currentBudget? Math.min(100, (spent / currentBudget) * 100) : 0;
     const barClass = percent > 80? 'danger' : percent > 60? 'warn' : '';
 
@@ -326,39 +431,23 @@ img.proof { max-width: 100px; max-height: 100px; border-radius: 6px; cursor: poi
     `;
   }
 
-  // Add/Edit/Delete
+  // Manual Add/Edit/Delete
   document.getElementById('btnAdd').onclick = async () => {
     const id = document.getElementById('editId').value;
     const dateVal = document.getElementById('txDate').value || getToday();
-    let proofUrl = null;
-
-    // Upload proof
-    const file = document.getElementById('proof').files[0];
-    if (file) {
-      const path = `${currentUser.id}/${Date.now()}_${file.name}`;
-      const { data } = await supabase.storage.from('proofs').upload(path, file);
-      proofUrl = data?.path;
-
-      // OCR
-      const { data: ocr } = await Tesseract.recognize(file, 'jpn+eng');
-      const text = ocr.data.text;
-      if (!document.getElementById('desc').value) {
-        document.getElementById('desc').value = text.split('\n')[0].slice(0, 50);
-      }
-    }
 
     const payload = {
       user_id: currentUser.id,
       type: document.getElementById('type').value,
       category: document.getElementById('category').value,
-      desc: document.getElementById('desc').value,
-      amount: parseFloat(document.getElementById('amount').value),
+      "desc": document.getElementById('desc').value,
+      amount: parseFloat(document.getElementById('amount').value) || 0,
       created_at: dateVal,
-      proof_url: proofUrl
+      proof_url: null
     };
 
     const { error } = id
-     ? await supabase.from('transactions').update(payload).eq('id', id)
+   ? await supabase.from('transactions').update(payload).eq('id', id)
       : await supabase.from('transactions').insert([payload]);
 
     if (error) alert('Gagal simpan: ' + error.message);
@@ -373,7 +462,6 @@ img.proof { max-width: 100px; max-height: 100px; border-radius: 6px; cursor: poi
     document.getElementById('editId').value = '';
     document.getElementById('desc').value = '';
     document.getElementById('amount').value = '';
-    document.getElementById('proof').value = '';
     setTodayDate();
     document.getElementById('btnAdd').textContent = 'Simpan';
     document.getElementById('btnCancelEdit').classList.add('hidden');
@@ -392,9 +480,9 @@ img.proof { max-width: 100px; max-height: 100px; border-radius: 6px; cursor: poi
     document.getElementById('type').value = t.type;
     populateCategories();
     document.getElementById('category').value = t.category;
-    document.getElementById('desc').value = t.desc;
-    document.getElementById('amount').value = t.amount;
-    document.getElementById('txDate').value = t.created_at.split('T')[0];
+    document.getElementById('desc').value = t.desc || '';
+    document.getElementById('amount').value = t.amount || '';
+    document.getElementById('txDate').value = t.created_at? t.created_at.split('T')[0] : getToday();
     document.getElementById('btnAdd').textContent = 'Update';
     document.getElementById('btnCancelEdit').classList.remove('hidden');
     window.scrollTo(0, document.getElementById('btnAdd').offsetTop);
@@ -403,10 +491,10 @@ img.proof { max-width: 100px; max-height: 100px; border-radius: 6px; cursor: poi
   // Load & Render
   async function loadTransactions() {
     const { data, error } = await supabase
-     .from('transactions')
-     .select('*')
-     .eq('user_id', currentUser.id)
-     .order('created_at', { ascending: false });
+   .from('transactions')
+   .select('*')
+   .eq('user_id', currentUser.id)
+   .order('created_at', { ascending: false });
 
     if (error) return console.error(error);
     allTransactions = data || [];
@@ -417,14 +505,16 @@ img.proof { max-width: 100px; max-height: 100px; border-radius: 6px; cursor: poi
   function renderTransactions() {
     const fType = document.getElementById('filterType').value;
     const fCat = document.getElementById('filterCategory').value;
-    const fSearch = document.getElementById('searchDesc').value.toLowerCase();
+    const fSearch = (document.getElementById('searchDesc').value || '').toLowerCase();
     const fMonth = document.getElementById('filterMonth').value;
 
     const filtered = allTransactions.filter(t => {
-      return (!fType || t.type === fType) &&
-             (!fCat || t.category === fCat) &&
-             (!fSearch || t.desc?.toLowerCase().includes(fSearch)) &&
-             (!fMonth || t.created_at.startsWith(fMonth));
+      if (!t ||!t.created_at) return false;
+      const matchType =!fType || t.type === fType;
+      const matchCat =!fCat || t.category === fCat;
+      const matchSearch =!fSearch || (t.desc || '').toLowerCase().includes(fSearch);
+      const matchMonth =!fMonth || t.created_at.startsWith(fMonth);
+      return matchType && matchCat && matchSearch && matchMonth;
     });
 
     let income = 0, expense = 0;
@@ -432,21 +522,22 @@ img.proof { max-width: 100px; max-height: 100px; border-radius: 6px; cursor: poi
     let html = '';
 
     filtered.forEach(t => {
-      if (t.type === 'income') income += t.amount;
+      if (t.type === 'income') income += t.amount || 0;
       else {
-        expense += t.amount;
-        catTotals[t.category] = (catTotals[t.category] || 0) + t.amount;
+        expense += t.amount || 0;
+        catTotals[t.category || 'Lainnya'] = (catTotals[t.category || 'Lainnya'] || 0) + (t.amount || 0);
       }
 
       const sign = t.type === 'income'? '+' : '-';
       const cls = t.type === 'income'? 'income' : 'expense';
-      const proof = t.proof_url?
-        `<img src="${supabase.storage.from('proofs').getPublicUrl(t.proof_url).data.publicUrl}" class="proof" onclick="window.open(this.src)">` : '';
+      const proof = t.proof_url
+     ? `<img src="${supabase.storage.from('proofs').getPublicUrl(t.proof_url).data.publicUrl}" class="proof" onclick="window.open(this.src)">`
+        : '';
 
       html += `<div class="item">
         <div class="item-left">
-          <div>${t.desc || t.category} <span class="category-tag">${t.category}</span></div>
-          <small>${new Date(t.created_at).toLocaleDateString('ja-JP')}</small>
+          <div>${t.desc || t.category || 'Tanpa keterangan'} <span class="category-tag">${t.category || '-'}</span></div>
+          <small>${t.created_at? new Date(t.created_at).toLocaleDateString('ja-JP') : '-'}</small>
           ${proof}
         </div>
         <div class="item-right">
@@ -494,6 +585,15 @@ img.proof { max-width: 100px; max-height: 100px; border-radius: 6px; cursor: poi
 
   window.deleteTransaction = deleteTransaction;
   window.editTransaction = editTransaction;
+
+  // Register SW
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js')
+      .then(reg => console.log('SW registered'))
+      .catch(err => console.log('SW failed:', err));
+    });
+  }
 })();
 </script>
 </body>
