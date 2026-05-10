@@ -8,64 +8,67 @@
 <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
 <script>eruda.init();</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-body { 
-  font-family: system-ui, Arial, sans-serif; 
-  background: #0f172a; 
-  color: #e2e8f0; 
-  margin: 0; 
+body {
+  font-family: system-ui, Arial, sans-serif;
+  background: #0f172a;
+  color: #e2e8f0;
+  margin: 0;
   padding: 16px;
 }
-.container { 
-  max-width: 600px; 
-  margin: 0 auto; 
+.container {
+  max-width: 700px;
+  margin: 0 auto;
 }
-.box { 
-  background: #1e293b; 
-  padding: 20px; 
-  border-radius: 12px; 
+.box {
+  background: #1e293b;
+  padding: 20px;
+  border-radius: 12px;
   margin-bottom: 16px;
 }
-input, select, button { 
-  width: 100%; 
-  padding: 12px; 
-  margin: 8px 0; 
-  border-radius: 8px; 
-  border: 1px solid #334155; 
-  background: #0f172a; 
-  color: #e2e8f0; 
+input, select, button {
+  width: 100%;
+  padding: 12px;
+  margin: 8px 0;
+  border-radius: 8px;
+  border: 1px solid #334155;
+  background: #0f172a;
+  color: #e2e8f0;
   box-sizing: border-box;
 }
-button { 
-  background: #3b82f6; 
-  border: none; 
-  cursor: pointer; 
+button {
+  background: #3b82f6;
+  border: none;
+  cursor: pointer;
   font-weight: 600;
 }
 button.danger { background: #ef4444; }
 button:hover { opacity: 0.9; }
 .hidden { display: none; }
-.item { 
-  display: flex; 
-  justify-content: space-between; 
-  padding: 12px 0; 
+.item {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 0;
   border-bottom: 1px solid #334155;
 }
 .income { color: #22c55e; }
 .expense { color: #ef4444; }
-.header { 
-  display: flex; 
-  justify-content: space-between; 
-  align-items: center; 
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 16px;
 }
 h2, h3 { margin: 0 0 12px; }
+#greeting { font-size: 1.2rem; font-weight: 600; }
+canvas { max-width: 100%; }
 </style>
 </head>
 <body>
 <div class="container">
-  
+
   <div id="authPage" class="box">
     <h2>Catat Duit</h2>
     <input type="email" id="email" placeholder="Email">
@@ -76,12 +79,17 @@ h2, h3 { margin: 0 0 12px; }
 
   <div id="appPage" class="hidden">
     <div class="header">
-      <h2>Halo!</h2>
+      <h2 id="greeting">Halo!</h2>
       <button id="btnLogout" class="danger" style="width:auto; padding:8px 16px;">Logout</button>
     </div>
 
     <div class="box">
-      <h3>Total Saldo: <span id="balance">Rp 0</span></h3>
+      <h3>Total Saldo: <span id="balance">¥0</span></h3>
+    </div>
+
+    <div class="box">
+      <h3>Grafik Bulanan</h3>
+      <canvas id="chart"></canvas>
     </div>
 
     <div class="box">
@@ -92,6 +100,7 @@ h2, h3 { margin: 0 0 12px; }
       </select>
       <input type="text" id="desc" placeholder="Keterangan">
       <input type="number" id="amount" placeholder="Jumlah">
+      <input type="date" id="txDate">
       <button id="btnAdd">Simpan</button>
     </div>
 
@@ -107,22 +116,67 @@ h2, h3 { margin: 0 0 12px; }
 (function() {
   const SUPABASE_URL = 'https://wjzvnwkmmglgimamspwc.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_nfxU1mTiDHhQgDG_1U6eTQ_-7ePLctc';
-  
+
   if (window.supabaseClient) return;
   window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
   const supabase = window.supabaseClient;
 
   let currentUser = null;
+  let chartInstance = null;
+
+  const formatYen = (num) => new Intl.NumberFormat('ja-JP', {
+    style: 'currency',
+    currency: 'JPY',
+    maximumFractionDigits: 0
+  }).format(num);
+
+  const getToday = () => new Date().toISOString().split('T')[0];
+
+  // Salam Jepang sesuai jam Tokyo
+  function getJapaneseGreeting(name) {
+    const now = new Date();
+    // Jam Tokyo = UTC+9
+    const tokyoHour = new Intl.DateTimeFormat('en-US', {
+      hour: 'numeric',
+      hour12: false,
+      timeZone: 'Asia/Tokyo'
+    }).format(now);
+
+    const hour = parseInt(tokyoHour);
+    let greeting = 'Konbanwa';
+
+    if (hour >= 5 && hour < 11) greeting = 'Ohayou gozaimasu';
+    else if (hour >= 11 && hour < 17) greeting = 'Konnichiwa';
+
+    return `${greeting} ${name}-san`;
+  }
+
+  function getDisplayName(user) {
+    if (user.user_metadata?.name) return user.user_metadata.name;
+    return user.email.split('@')[0];
+  }
 
   checkUser();
+  setTodayDate();
 
   async function checkUser() {
     const { data } = await supabase.auth.getUser();
     if (data.user) {
       currentUser = data.user;
+      updateGreeting();
       showApp();
       loadTransactions();
     }
+  }
+
+  function updateGreeting() {
+    if (!currentUser) return;
+    const name = getDisplayName(currentUser);
+    document.getElementById('greeting').textContent = getJapaneseGreeting(name);
+  }
+
+  function setTodayDate() {
+    document.getElementById('txDate').value = getToday();
   }
 
   document.getElementById('btnSignUp').onclick = async () => {
@@ -142,8 +196,10 @@ h2, h3 { margin: 0 0 12px; }
     if (error) alert('Login gagal: ' + error.message);
     else {
       currentUser = data.user;
+      updateGreeting();
       showApp();
       loadTransactions();
+      setTodayDate();
     }
   };
 
@@ -151,6 +207,10 @@ h2, h3 { margin: 0 0 12px; }
     await supabase.auth.signOut();
     currentUser = null;
     showAuth();
+    if (chartInstance) {
+      chartInstance.destroy();
+      chartInstance = null;
+    }
   };
 
   function showApp() {
@@ -164,26 +224,29 @@ h2, h3 { margin: 0 0 12px; }
   }
 
   document.getElementById('btnAdd').onclick = async () => {
+    const dateVal = document.getElementById('txDate').value || getToday();
     const { error } = await supabase.from('transactions').insert([{
       user_id: currentUser.id,
       type: document.getElementById('type').value,
       desc: document.getElementById('desc').value,
-      amount: parseFloat(document.getElementById('amount').value)
+      amount: parseFloat(document.getElementById('amount').value),
+      created_at: dateVal
     }]);
     if (error) alert('Gagal simpan: ' + error.message);
     else {
       document.getElementById('desc').value = '';
       document.getElementById('amount').value = '';
+      setTodayDate();
       loadTransactions();
     }
   };
 
   async function loadTransactions() {
     const { data, error } = await supabase
-      .from('transactions')
-      .select('*')
-      .eq('user_id', currentUser.id)
-      .order('created_at', { ascending: false });
+  .from('transactions')
+  .select('*')
+  .eq('user_id', currentUser.id)
+  .order('created_at', { ascending: false });
 
     if (error) {
       console.error(error);
@@ -192,22 +255,72 @@ h2, h3 { margin: 0 0 12px; }
 
     let html = '';
     let balance = 0;
-    
+    let incomeByMonth = {};
+    let expenseByMonth = {};
+
     data.forEach(t => {
-      const sign = t.type === 'income' ? '+' : '-';
-      const cls = t.type === 'income' ? 'income' : 'expense';
-      balance += t.type === 'income' ? t.amount : -t.amount;
+      const sign = t.type === 'income'? '+' : '-';
+      const cls = t.type === 'income'? 'income' : 'expense';
+      balance += t.type === 'income'? t.amount : -t.amount;
+
+      const month = new Date(t.created_at).toLocaleDateString('ja-JP', {month: 'short', year: '2-digit'});
+      if (t.type === 'income') {
+        incomeByMonth[month] = (incomeByMonth[month] || 0) + t.amount;
+      } else {
+        expenseByMonth[month] = (expenseByMonth[month] || 0) + t.amount;
+      }
+
       html += `<div class="item">
         <div>
           <div>${t.desc}</div>
-          <small>${new Date(t.created_at).toLocaleDateString('id-ID')}</small>
+          <small>${new Date(t.created_at).toLocaleDateString('ja-JP')}</small>
         </div>
-        <div class="${cls}">${sign} Rp ${t.amount.toLocaleString('id-ID')}</div>
+        <div class="${cls}">${sign} ${formatYen(t.amount)}</div>
       </div>`;
     });
-    
+
     document.getElementById('list').innerHTML = html || '<div>Belum ada transaksi</div>';
-    document.getElementById('balance').innerText = 'Rp ' + balance.toLocaleString('id-ID');
+    document.getElementById('balance').innerText = formatYen(balance);
+    drawChart(incomeByMonth, expenseByMonth);
+  }
+
+  function drawChart(incomeData, expenseData) {
+    const ctx = document.getElementById('chart').getContext('2d');
+    const labels = Object.keys({...incomeData,...expenseData}).reverse();
+    if (chartInstance) chartInstance.destroy();
+
+    chartInstance = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [
+          { label: 'Pemasukan', data: labels.map(l => incomeData[l] || 0), backgroundColor: '#22c55e' },
+          { label: 'Pengeluaran', data: labels.map(l => expenseData[l] || 0), backgroundColor: '#ef4444' }
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { labels: { color: '#e2e8f0' } },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                return context.dataset.label + ': ' + formatYen(context.parsed.y);
+              }
+            }
+          }
+        },
+        scales: {
+          x: { ticks: { color: '#e2e8f0' } },
+          y: {
+            ticks: {
+              color: '#e2e8f0',
+              callback: function(value) { return formatYen(value); }
+            }
+          }
+        }
+      }
+    });
   }
 })();
 </script>
