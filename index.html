@@ -104,107 +104,112 @@ h2, h3 { margin: 0 0 12px; }
 </div>
 
 <script>
-const SUPABASE_URL = 'https://wjzvnwkmmglgimamspwc.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_nfxU1mTiDHhQgDG_1U6eTQ_-7ePLctc';
-let supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-let currentUser = null;
-
-checkUser();
-
-async function checkUser() {
-  const { data } = await supabase.auth.getUser();
-  if (data.user) {
-    currentUser = data.user;
-    showApp();
-    loadTransactions();
-  }
-}
-
-document.getElementById('btnSignUp').onclick = async () => {
-  const { error } = await supabase.auth.signUp({
-    email: document.getElementById('email').value,
-    password: document.getElementById('password').value
-  });
-  if (error) alert('Daftar gagal: ' + error.message);
-  else alert('Daftar sukses! Login sekarang.');
-};
-
-document.getElementById('btnLogin').onclick = async () => {
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email: document.getElementById('email').value,
-    password: document.getElementById('password').value
-  });
-  if (error) alert('Login gagal: ' + error.message);
-  else {
-    currentUser = data.user;
-    showApp();
-    loadTransactions();
-  }
-};
-
-document.getElementById('btnLogout').onclick = async () => {
-  await supabase.auth.signOut();
-  currentUser = null;
-  showAuth();
-};
-
-function showApp() {
-  document.getElementById('authPage').classList.add('hidden');
-  document.getElementById('appPage').classList.remove('hidden');
-}
-
-function showAuth() {
-  document.getElementById('authPage').classList.remove('hidden');
-  document.getElementById('appPage').classList.add('hidden');
-}
-
-document.getElementById('btnAdd').onclick = async () => {
-  const { error } = await supabase.from('transactions').insert([{
-    user_id: currentUser.id,
-    type: document.getElementById('type').value,
-    desc: document.getElementById('desc').value,
-    amount: parseFloat(document.getElementById('amount').value)
-  }]);
-  if (error) alert('Gagal simpan: ' + error.message);
-  else {
-    document.getElementById('desc').value = '';
-    document.getElementById('amount').value = '';
-    loadTransactions();
-  }
-};
-
-async function loadTransactions() {
-  const { data, error } = await supabase
-    .from('transactions')
-    .select('*')
-    .eq('user_id', currentUser.id)
-    .order('created_at', { ascending: false });
-
-  if (error) {
-    console.error(error);
-    return;
-  }
-
-  let html = '';
-  let balance = 0;
+(function() {
+  const SUPABASE_URL = 'https://wjzvnwkmmglgimamspwc.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_nfxU1mTiDHhQgDG_1U6eTQ_-7ePLctc';
   
-  data.forEach(t => {
-    const sign = t.type === 'income' ? '+' : '-';
-    const cls = t.type === 'income' ? 'income' : 'expense';
-    balance += t.type === 'income' ? t.amount : -t.amount;
-    html += `<div class="item">
-      <div>
-        <div>${t.desc}</div>
-        <small>${new Date(t.created_at).toLocaleDateString('id-ID')}</small>
-      </div>
-      <div class="${cls}">${sign} Rp ${t.amount.toLocaleString('id-ID')}</div>
-    </div>`;
-  });
-  
-  document.getElementById('list').innerHTML = html || '<div>Belum ada transaksi</div>';
-  document.getElementById('balance').innerText = 'Rp ' + balance.toLocaleString('id-ID');
-}
+  if (window.supabaseClient) return;
+  window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  const supabase = window.supabaseClient;
+
+  let currentUser = null;
+
+  checkUser();
+
+  async function checkUser() {
+    const { data } = await supabase.auth.getUser();
+    if (data.user) {
+      currentUser = data.user;
+      showApp();
+      loadTransactions();
+    }
+  }
+
+  document.getElementById('btnSignUp').onclick = async () => {
+    const { error } = await supabase.auth.signUp({
+      email: document.getElementById('email').value,
+      password: document.getElementById('password').value
+    });
+    if (error) alert('Daftar gagal: ' + error.message);
+    else alert('Daftar sukses! Login sekarang.');
+  };
+
+  document.getElementById('btnLogin').onclick = async () => {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: document.getElementById('email').value,
+      password: document.getElementById('password').value
+    });
+    if (error) alert('Login gagal: ' + error.message);
+    else {
+      currentUser = data.user;
+      showApp();
+      loadTransactions();
+    }
+  };
+
+  document.getElementById('btnLogout').onclick = async () => {
+    await supabase.auth.signOut();
+    currentUser = null;
+    showAuth();
+  };
+
+  function showApp() {
+    document.getElementById('authPage').classList.add('hidden');
+    document.getElementById('appPage').classList.remove('hidden');
+  }
+
+  function showAuth() {
+    document.getElementById('authPage').classList.remove('hidden');
+    document.getElementById('appPage').classList.add('hidden');
+  }
+
+  document.getElementById('btnAdd').onclick = async () => {
+    const { error } = await supabase.from('transactions').insert([{
+      user_id: currentUser.id,
+      type: document.getElementById('type').value,
+      desc: document.getElementById('desc').value,
+      amount: parseFloat(document.getElementById('amount').value)
+    }]);
+    if (error) alert('Gagal simpan: ' + error.message);
+    else {
+      document.getElementById('desc').value = '';
+      document.getElementById('amount').value = '';
+      loadTransactions();
+    }
+  };
+
+  async function loadTransactions() {
+    const { data, error } = await supabase
+      .from('transactions')
+      .select('*')
+      .eq('user_id', currentUser.id)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error(error);
+      return;
+    }
+
+    let html = '';
+    let balance = 0;
+    
+    data.forEach(t => {
+      const sign = t.type === 'income' ? '+' : '-';
+      const cls = t.type === 'income' ? 'income' : 'expense';
+      balance += t.type === 'income' ? t.amount : -t.amount;
+      html += `<div class="item">
+        <div>
+          <div>${t.desc}</div>
+          <small>${new Date(t.created_at).toLocaleDateString('id-ID')}</small>
+        </div>
+        <div class="${cls}">${sign} Rp ${t.amount.toLocaleString('id-ID')}</div>
+      </div>`;
+    });
+    
+    document.getElementById('list').innerHTML = html || '<div>Belum ada transaksi</div>';
+    document.getElementById('balance').innerText = 'Rp ' + balance.toLocaleString('id-ID');
+  }
+})();
 </script>
 </body>
 </html>
