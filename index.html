@@ -3,67 +3,82 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0f172a">
+<link rel="manifest" href="manifest.json">
 <title>Catat Duit</title>
 
 <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
 <script>eruda.init();</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
 <style>
+:root {
+  --bg: #0f172a; --card: #1e293b; --text: #e2e8f0; --border: #334155;
+  --input-bg: #0f172a; --primary: #3b82f6; --danger: #ef4444; --success: #22c55e;
+  --warn: #f59e0b;
+}
+[data-theme="light"] {
+  --bg: #f8fafc; --card: #ffffff; --text: #1e293b; --border: #cbd5e1;
+  --input-bg: #ffffff; --primary: #3b82f6; --danger: #ef4444; --success: #16a34a;
+  --warn: #d97706;
+}
+* { transition: all 0.2s; box-sizing: border-box; }
 body {
-  font-family: system-ui, Arial, sans-serif;
-  background: #0f172a;
-  color: #e2e8f0;
-  margin: 0;
-  padding: 16px;
+  font-family: system-ui, Arial, sans-serif; background: var(--bg); color: var(--text);
+  margin: 0; padding: 16px;
 }
-.container {
-  max-width: 700px;
-  margin: 0 auto;
-}
+.container { max-width: 800px; margin: 0 auto; }
 .box {
-  background: #1e293b;
-  padding: 20px;
-  border-radius: 12px;
-  margin-bottom: 16px;
+  background: var(--card); padding: 20px; border-radius: 12px; margin-bottom: 16px;
+  border: 1px solid var(--border);
 }
-input, select, button {
-  width: 100%;
-  padding: 12px;
-  margin: 8px 0;
-  border-radius: 8px;
-  border: 1px solid #334155;
-  background: #0f172a;
-  color: #e2e8f0;
-  box-sizing: border-box;
+input, select, button, textarea {
+  width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px;
+  border: 1px solid var(--border); background: var(--input-bg); color: var(--text);
 }
 button {
-  background: #3b82f6;
-  border: none;
-  cursor: pointer;
-  font-weight: 600;
+  background: var(--primary); border: none; cursor: pointer; font-weight: 600; color: white;
 }
-button.danger { background: #ef4444; }
+button.danger { background: var(--danger); }
+button.warn { background: var(--warn); }
+button.ghost {
+  background: transparent; border: 1px solid var(--border); color: var(--text);
+  width: auto; padding: 8px 16px;
+}
+button.small { width: auto; padding: 6px 12px; font-size: 0.9rem; }
 button:hover { opacity: 0.9; }
 .hidden { display: none; }
 .item {
-  display: flex;
-  justify-content: space-between;
-  padding: 12px 0;
-  border-bottom: 1px solid #334155;
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 12px 0; border-bottom: 1px solid var(--border);
 }
-.income { color: #22c55e; }
-.expense { color: #ef4444; }
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-}
+.item-left { flex: 1; }
+.item-right { display: flex; align-items: center; gap: 8px; }
+.income { color: var(--success); }
+.expense { color: var(--danger); }
+.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
 h2, h3 { margin: 0 0 12px; }
 #greeting { font-size: 1.2rem; font-weight: 600; }
 canvas { max-width: 100%; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+.stat {
+  background: var(--card); padding: 16px; border-radius: 10px; border: 1px solid var(--border);
+}
+.progress {
+  height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; margin-top: 6px;
+}
+.progress-bar {
+  height: 100%; background: var(--success); transition: width 0.3s;
+}
+.progress-bar.warn { background: var(--warn); }
+.progress-bar.danger { background: var(--danger); }
+.category-tag {
+  font-size: 0.85rem; opacity: 0.8; margin-left: 6px; background: var(--border);
+  padding: 2px 6px; border-radius: 4px;
+}
+img.proof { max-width: 100px; max-height: 100px; border-radius: 6px; cursor: pointer; }
 </style>
 </head>
 <body>
@@ -75,33 +90,73 @@ canvas { max-width: 100%; }
     <input type="password" id="password" placeholder="Password">
     <button id="btnSignUp">Daftar</button>
     <button id="btnLogin">Login</button>
+    <button id="btnToggleTheme" class="ghost" style="margin-top:12px;">🌙 Dark Mode</button>
   </div>
 
   <div id="appPage" class="hidden">
     <div class="header">
       <h2 id="greeting">Halo!</h2>
-      <button id="btnLogout" class="danger" style="width:auto; padding:8px 16px;">Logout</button>
+      <div style="display:flex; gap:8px;">
+        <button id="btnToggleThemeApp" class="ghost">🌙</button>
+        <button id="btnLogout" class="danger">Logout</button>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="stat">
+        <small>Pemasukan Bulan Ini</small>
+        <h3 id="statIncome">¥0</h3>
+      </div>
+      <div class="stat">
+        <small>Pengeluaran Bulan Ini</small>
+        <h3 id="statExpense">¥0</h3>
+      </div>
+      <div class="stat">
+        <small>Saldo Bulan Ini</small>
+        <h3 id="statBalance">¥0</h3>
+      </div>
     </div>
 
     <div class="box">
-      <h3>Total Saldo: <span id="balance">¥0</span></h3>
+      <h3>Budget Limit</h3>
+      <div id="budgetList"></div>
+      <input type="number" id="budgetAmount" placeholder="Set limit pengeluaran bulan ini">
+      <button id="btnSetBudget">Simpan Limit</button>
     </div>
 
     <div class="box">
-      <h3>Grafik Bulanan</h3>
-      <canvas id="chart"></canvas>
+      <h3>Filter & Search</h3>
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
+        <select id="filterType">
+          <option value="">Semua Tipe</option>
+          <option value="income">Pemasukan</option>
+          <option value="expense">Pengeluaran</option>
+        </select>
+        <select id="filterCategory"></select>
+      </div>
+      <input type="text" id="searchDesc" placeholder="Cari keterangan...">
+      <input type="month" id="filterMonth">
     </div>
 
     <div class="box">
-      <h3>Tambah Transaksi</h3>
+      <h3>Grafik Pengeluaran</h3>
+      <canvas id="chart" height="200"></canvas>
+    </div>
+
+    <div class="box">
+      <h3>Tambah/Edit Transaksi</h3>
+      <input type="hidden" id="editId">
       <select id="type">
         <option value="income">Pemasukan</option>
         <option value="expense">Pengeluaran</option>
       </select>
-      <input type="text" id="desc" placeholder="Keterangan">
+      <select id="category"></select>
+      <input type="text" id="desc" placeholder="Keterangan opsional">
       <input type="number" id="amount" placeholder="Jumlah">
       <input type="date" id="txDate">
+      <input type="file" id="proof" accept="image/*">
       <button id="btnAdd">Simpan</button>
+      <button id="btnCancelEdit" class="ghost hidden">Batal Edit</button>
     </div>
 
     <div class="box">
@@ -116,48 +171,78 @@ canvas { max-width: 100%; }
 (function() {
   const SUPABASE_URL = 'https://wjzvnwkmmglgimamspwc.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_nfxU1mTiDHhQgDG_1U6eTQ_-7ePLctc';
-
   if (window.supabaseClient) return;
   window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
   const supabase = window.supabaseClient;
 
-  let currentUser = null;
-  let chartInstance = null;
+  let currentUser = null, chartInstance = null, currentBudget = 0;
+  let allTransactions = [];
+
+  const categories = {
+    income: ['Gaji', 'Bonus', 'Freelance', 'Investasi', 'Lainnya'],
+    expense: ['Makanan', 'Transport', 'Belanja', 'Tagihan', 'Hiburan', 'Kesehatan', 'Lainnya']
+  };
 
   const formatYen = (num) => new Intl.NumberFormat('ja-JP', {
-    style: 'currency',
-    currency: 'JPY',
-    maximumFractionDigits: 0
+    style: 'currency', currency: 'JPY', maximumFractionDigits: 0
   }).format(num);
 
   const getToday = () => new Date().toISOString().split('T')[0];
+  const getMonth = () => new Date().toISOString().slice(0, 7);
 
-  // Salam Jepang sesuai jam Tokyo
-  function getJapaneseGreeting(name) {
-    const now = new Date();
-    // Jam Tokyo = UTC+9
-    const tokyoHour = new Intl.DateTimeFormat('en-US', {
-      hour: 'numeric',
-      hour12: false,
-      timeZone: 'Asia/Tokyo'
-    }).format(now);
+  // Theme
+  const themeKey = 'theme';
+  const savedTheme = localStorage.getItem(themeKey) || 'dark';
+  document.documentElement.setAttribute('data-theme', savedTheme);
+  updateThemeButtons(savedTheme);
 
-    const hour = parseInt(tokyoHour);
-    let greeting = 'Konbanwa';
-
-    if (hour >= 5 && hour < 11) greeting = 'Ohayou gozaimasu';
-    else if (hour >= 11 && hour < 17) greeting = 'Konnichiwa';
-
-    return `${greeting} ${name}-san`;
+  function toggleTheme() {
+    const next = document.documentElement.getAttribute('data-theme') === 'dark'? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem(themeKey, next);
+    updateThemeButtons(next);
+    if (chartInstance) drawChart(window._chartData);
   }
-
-  function getDisplayName(user) {
-    if (user.user_metadata?.name) return user.user_metadata.name;
-    return user.email.split('@')[0];
+  function updateThemeButtons(theme) {
+    const icon = theme === 'dark'? '🌙' : '☀️';
+    document.getElementById('btnToggleTheme').textContent = `${icon} ${theme === 'dark'? 'Dark Mode' : 'Light Mode'}`;
+    document.getElementById('btnToggleThemeApp').textContent = icon;
   }
+  document.getElementById('btnToggleTheme').onclick = toggleTheme;
+  document.getElementById('btnToggleThemeApp').onclick = toggleTheme;
 
+  // Init
   checkUser();
   setTodayDate();
+  populateCategories();
+  document.getElementById('type').onchange = populateCategories;
+  document.getElementById('filterMonth').value = getMonth();
+  ['filterType', 'filterCategory', 'searchDesc', 'filterMonth'].forEach(id => {
+    document.getElementById(id).onchange = renderTransactions;
+    document.getElementById(id).oninput = renderTransactions;
+  });
+
+  function populateCategories() {
+    const type = document.getElementById('type').value;
+    const catSelect = document.getElementById('category');
+    catSelect.innerHTML = '';
+    categories[type].forEach(cat => {
+      catSelect.innerHTML += `<option value="${cat}">${cat}</option>`;
+    });
+    document.getElementById('filterCategory').innerHTML = '<option value="">Semua Kategori</option>' +
+      categories.expense.map(c => `<option value="${c}">${c}</option>`).join('');
+  }
+
+  function getJapaneseGreeting(name) {
+    const hour = parseInt(new Intl.DateTimeFormat('en-US', {hour: 'numeric', hour12: false, timeZone: 'Asia/Tokyo'}).format(new Date()));
+    let g = 'Konbanwa';
+    if (hour >= 5 && hour < 11) g = 'Ohayou gozaimasu';
+    else if (hour < 17) g = 'Konnichiwa';
+    return `${g} ${name}-san`;
+  }
+  function getDisplayName(user) {
+    return user.user_metadata?.name || user.email.split('@')[0];
+  }
 
   async function checkUser() {
     const { data } = await supabase.auth.getUser();
@@ -165,29 +250,25 @@ canvas { max-width: 100%; }
       currentUser = data.user;
       updateGreeting();
       showApp();
+      loadBudget();
       loadTransactions();
     }
   }
-
   function updateGreeting() {
-    if (!currentUser) return;
-    const name = getDisplayName(currentUser);
-    document.getElementById('greeting').textContent = getJapaneseGreeting(name);
+    document.getElementById('greeting').textContent = getJapaneseGreeting(getDisplayName(currentUser));
   }
-
   function setTodayDate() {
     document.getElementById('txDate').value = getToday();
   }
 
+  // Auth
   document.getElementById('btnSignUp').onclick = async () => {
     const { error } = await supabase.auth.signUp({
       email: document.getElementById('email').value,
       password: document.getElementById('password').value
     });
-    if (error) alert('Daftar gagal: ' + error.message);
-    else alert('Daftar sukses! Login sekarang.');
+    alert(error? 'Daftar gagal: ' + error.message : 'Daftar sukses! Login sekarang.');
   };
-
   document.getElementById('btnLogin').onclick = async () => {
     const { data, error } = await supabase.auth.signInWithPassword({
       email: document.getElementById('email').value,
@@ -198,130 +279,221 @@ canvas { max-width: 100%; }
       currentUser = data.user;
       updateGreeting();
       showApp();
+      loadBudget();
       loadTransactions();
       setTodayDate();
     }
   };
-
   document.getElementById('btnLogout').onclick = async () => {
     await supabase.auth.signOut();
     currentUser = null;
     showAuth();
-    if (chartInstance) {
-      chartInstance.destroy();
-      chartInstance = null;
-    }
+    if (chartInstance) chartInstance.destroy();
   };
-
   function showApp() {
     document.getElementById('authPage').classList.add('hidden');
     document.getElementById('appPage').classList.remove('hidden');
   }
-
   function showAuth() {
     document.getElementById('authPage').classList.remove('hidden');
     document.getElementById('appPage').classList.add('hidden');
   }
 
+  // Budget
+  async function loadBudget() {
+    const month = getMonth();
+    const { data } = await supabase.from('budgets').select('amount').eq('user_id', currentUser.id).eq('month', month).single();
+    currentBudget = data?.amount || 0;
+    renderBudget();
+  }
+  document.getElementById('btnSetBudget').onclick = async () => {
+    const amount = parseFloat(document.getElementById('budgetAmount').value);
+    const month = getMonth();
+    await supabase.from('budgets').upsert({user_id: currentUser.id, month, amount});
+    currentBudget = amount;
+    renderBudget();
+    loadTransactions();
+  };
+  function renderBudget() {
+    const spent = allTransactions.filter(t => t.type === 'expense' && t.created_at.startsWith(getMonth()))
+     .reduce((a, b) => a + b.amount, 0);
+    const percent = currentBudget? Math.min(100, (spent / currentBudget) * 100) : 0;
+    const barClass = percent > 80? 'danger' : percent > 60? 'warn' : '';
+
+    document.getElementById('budgetList').innerHTML = `
+      <div>Limit: ${formatYen(currentBudget)} | Terpakai: ${formatYen(spent)}</div>
+      <div class="progress"><div class="progress-bar ${barClass}" style="width:${percent}%"></div></div>
+    `;
+  }
+
+  // Add/Edit/Delete
   document.getElementById('btnAdd').onclick = async () => {
+    const id = document.getElementById('editId').value;
     const dateVal = document.getElementById('txDate').value || getToday();
-    const { error } = await supabase.from('transactions').insert([{
+    let proofUrl = null;
+
+    // Upload proof
+    const file = document.getElementById('proof').files[0];
+    if (file) {
+      const path = `${currentUser.id}/${Date.now()}_${file.name}`;
+      const { data } = await supabase.storage.from('proofs').upload(path, file);
+      proofUrl = data?.path;
+
+      // OCR
+      const { data: ocr } = await Tesseract.recognize(file, 'jpn+eng');
+      const text = ocr.data.text;
+      if (!document.getElementById('desc').value) {
+        document.getElementById('desc').value = text.split('\n')[0].slice(0, 50);
+      }
+    }
+
+    const payload = {
       user_id: currentUser.id,
       type: document.getElementById('type').value,
+      category: document.getElementById('category').value,
       desc: document.getElementById('desc').value,
       amount: parseFloat(document.getElementById('amount').value),
-      created_at: dateVal
-    }]);
+      created_at: dateVal,
+      proof_url: proofUrl
+    };
+
+    const { error } = id
+     ? await supabase.from('transactions').update(payload).eq('id', id)
+      : await supabase.from('transactions').insert([payload]);
+
     if (error) alert('Gagal simpan: ' + error.message);
     else {
-      document.getElementById('desc').value = '';
-      document.getElementById('amount').value = '';
-      setTodayDate();
+      resetForm();
       loadTransactions();
+      loadBudget();
     }
   };
 
+  function resetForm() {
+    document.getElementById('editId').value = '';
+    document.getElementById('desc').value = '';
+    document.getElementById('amount').value = '';
+    document.getElementById('proof').value = '';
+    setTodayDate();
+    document.getElementById('btnAdd').textContent = 'Simpan';
+    document.getElementById('btnCancelEdit').classList.add('hidden');
+  }
+  document.getElementById('btnCancelEdit').onclick = resetForm;
+
+  async function deleteTransaction(id) {
+    if (!confirm('Hapus transaksi ini?')) return;
+    await supabase.from('transactions').delete().eq('id', id).eq('user_id', currentUser.id);
+    loadTransactions();
+    loadBudget();
+  }
+
+  function editTransaction(t) {
+    document.getElementById('editId').value = t.id;
+    document.getElementById('type').value = t.type;
+    populateCategories();
+    document.getElementById('category').value = t.category;
+    document.getElementById('desc').value = t.desc;
+    document.getElementById('amount').value = t.amount;
+    document.getElementById('txDate').value = t.created_at.split('T')[0];
+    document.getElementById('btnAdd').textContent = 'Update';
+    document.getElementById('btnCancelEdit').classList.remove('hidden');
+    window.scrollTo(0, document.getElementById('btnAdd').offsetTop);
+  }
+
+  // Load & Render
   async function loadTransactions() {
     const { data, error } = await supabase
-  .from('transactions')
-  .select('*')
-  .eq('user_id', currentUser.id)
-  .order('created_at', { ascending: false });
+     .from('transactions')
+     .select('*')
+     .eq('user_id', currentUser.id)
+     .order('created_at', { ascending: false });
 
-    if (error) {
-      console.error(error);
-      return;
-    }
+    if (error) return console.error(error);
+    allTransactions = data || [];
+    renderTransactions();
+    renderBudget();
+  }
 
+  function renderTransactions() {
+    const fType = document.getElementById('filterType').value;
+    const fCat = document.getElementById('filterCategory').value;
+    const fSearch = document.getElementById('searchDesc').value.toLowerCase();
+    const fMonth = document.getElementById('filterMonth').value;
+
+    const filtered = allTransactions.filter(t => {
+      return (!fType || t.type === fType) &&
+             (!fCat || t.category === fCat) &&
+             (!fSearch || t.desc?.toLowerCase().includes(fSearch)) &&
+             (!fMonth || t.created_at.startsWith(fMonth));
+    });
+
+    let income = 0, expense = 0;
+    const catTotals = {};
     let html = '';
-    let balance = 0;
-    let incomeByMonth = {};
-    let expenseByMonth = {};
 
-    data.forEach(t => {
-      const sign = t.type === 'income'? '+' : '-';
-      const cls = t.type === 'income'? 'income' : 'expense';
-      balance += t.type === 'income'? t.amount : -t.amount;
-
-      const month = new Date(t.created_at).toLocaleDateString('ja-JP', {month: 'short', year: '2-digit'});
-      if (t.type === 'income') {
-        incomeByMonth[month] = (incomeByMonth[month] || 0) + t.amount;
-      } else {
-        expenseByMonth[month] = (expenseByMonth[month] || 0) + t.amount;
+    filtered.forEach(t => {
+      if (t.type === 'income') income += t.amount;
+      else {
+        expense += t.amount;
+        catTotals[t.category] = (catTotals[t.category] || 0) + t.amount;
       }
 
+      const sign = t.type === 'income'? '+' : '-';
+      const cls = t.type === 'income'? 'income' : 'expense';
+      const proof = t.proof_url?
+        `<img src="${supabase.storage.from('proofs').getPublicUrl(t.proof_url).data.publicUrl}" class="proof" onclick="window.open(this.src)">` : '';
+
       html += `<div class="item">
-        <div>
-          <div>${t.desc}</div>
+        <div class="item-left">
+          <div>${t.desc || t.category} <span class="category-tag">${t.category}</span></div>
           <small>${new Date(t.created_at).toLocaleDateString('ja-JP')}</small>
+          ${proof}
         </div>
-        <div class="${cls}">${sign} ${formatYen(t.amount)}</div>
+        <div class="item-right">
+          <div class="${cls}">${sign} ${formatYen(t.amount)}</div>
+          <button class="warn small" onclick='editTransaction(${JSON.stringify(t)})'>Edit</button>
+          <button class="danger small" onclick="deleteTransaction(${t.id})">Hapus</button>
+        </div>
       </div>`;
     });
 
     document.getElementById('list').innerHTML = html || '<div>Belum ada transaksi</div>';
-    document.getElementById('balance').innerText = formatYen(balance);
-    drawChart(incomeByMonth, expenseByMonth);
+    document.getElementById('statIncome').textContent = formatYen(income);
+    document.getElementById('statExpense').textContent = formatYen(expense);
+    document.getElementById('statBalance').textContent = formatYen(income - expense);
+
+    window._chartData = catTotals;
+    drawChart(catTotals);
   }
 
-  function drawChart(incomeData, expenseData) {
+  function drawChart(catTotals) {
     const ctx = document.getElementById('chart').getContext('2d');
-    const labels = Object.keys({...incomeData,...expenseData}).reverse();
     if (chartInstance) chartInstance.destroy();
 
+    const labels = Object.keys(catTotals);
+    const data = Object.values(catTotals);
+    const textColor = getComputedStyle(document.documentElement).getPropertyValue('--text');
+
     chartInstance = new Chart(ctx, {
-      type: 'bar',
+      type: 'doughnut',
       data: {
-        labels: labels,
-        datasets: [
-          { label: 'Pemasukan', data: labels.map(l => incomeData[l] || 0), backgroundColor: '#22c55e' },
-          { label: 'Pengeluaran', data: labels.map(l => expenseData[l] || 0), backgroundColor: '#ef4444' }
-        ]
+        labels,
+        datasets: [{ data, backgroundColor: ['#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6'] }]
       },
       options: {
         responsive: true,
         plugins: {
-          legend: { labels: { color: '#e2e8f0' } },
+          legend: { position: 'bottom', labels: { color: textColor } },
           tooltip: {
-            callbacks: {
-              label: function(context) {
-                return context.dataset.label + ': ' + formatYen(context.parsed.y);
-              }
-            }
-          }
-        },
-        scales: {
-          x: { ticks: { color: '#e2e8f0' } },
-          y: {
-            ticks: {
-              color: '#e2e8f0',
-              callback: function(value) { return formatYen(value); }
-            }
+            callbacks: { label: ctx => `${ctx.label}: ${formatYen(ctx.parsed)}` }
           }
         }
       }
     });
   }
+
+  window.deleteTransaction = deleteTransaction;
+  window.editTransaction = editTransaction;
 })();
 </script>
 </body>
