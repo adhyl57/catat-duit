@@ -47,20 +47,39 @@ body { background: var(--bg); color: var(--text); padding-bottom: 80px; transiti
 
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .mini-card {
-  background: var(--card); border-radius: 12px; padding: 12px; border: 2px solid var(--border);
+  background: var(--card);
+  border-radius: 12px;
+  padding: 12px;
+  border: 1px solid var(--border);
 }
 .mini-card.green {
-  border-color: var(--green);
-  background: rgba(16, 185, 129, 0.1);
+  border-color: #34d399;
+  background: #064e3b;
 }
 .mini-card.red {
-  border-color: var(--red);
-  background: rgba(239, 68, 68, 0.1);
+  border-color: #f87171;
+  background: #7f1d1d;
 }
-.mini-card.amt { font-size: 18px; font-weight: 700; }
+[data-theme="dark"].mini-card div:first-child {
+  color: #e2e8f0;
+  font-size: 13px;
+  font-weight: 500;
+}
+[data-theme="dark"].mini-card.amt {
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: 700;
+}
+.mini-card.amt {
+  font-size: 18px;
+  font-weight: 700;
+}
 .mini-card.green.amt { color: var(--green); }
 .mini-card.red.amt { color: var(--red); }
-.mini-card div:first-child { color: var(--subtext); font-size: 13px; }
+.mini-card div:first-child {
+  color: var(--subtext);
+  font-size: 13px;
+}
 
 .btn {
   padding: 12px 16px; border-radius: 10px; border: none; font-weight: 600; cursor: pointer;
@@ -374,18 +393,26 @@ if (!window.__appInit) {
   async function setBudget() {
     const amount = parseFloat(document.getElementById('budgetAmount').value) || 0;
     const month = getMonth();
+    const start = `${month}-01`;
+    const end = `${month}-31T23:59:59.999Z`;
 
     if (!amount || amount <= 0) {
       alert('Masukkan jumlah budget yang valid');
       return;
     }
 
-    await supabase
-    .from('transactions')
-    .delete()
-    .eq('user_id', currentUser.id)
-    .eq('type', 'budget')
-    .like('created_at', month + '%');
+    const { error: delErr } = await supabase
+   .from('transactions')
+   .delete()
+   .eq('user_id', currentUser.id)
+   .eq('type', 'budget')
+   .gte('created_at', start)
+   .lte('created_at', end);
+
+    if (delErr) {
+      alert('Gagal hapus budget lama: ' + delErr.message);
+      return;
+    }
 
     const { error } = await supabase.from('transactions').insert([{
       user_id: currentUser.id,
@@ -393,11 +420,12 @@ if (!window.__appInit) {
       category: 'Budget ' + month,
       desc: 'Budget limit bulan ' + month,
       amount: amount,
-      created_at: month + '-01'
+      created_at: start
     }]);
 
     if (error) alert('Gagal simpan budget: ' + error.message);
     else {
+      document.getElementById('budgetAmount').value = '';
       await loadData();
       alert('Budget bulan ' + month + ' disimpan!');
     }
@@ -405,10 +433,10 @@ if (!window.__appInit) {
 
   async function loadData() {
     const { data } = await supabase
-    .from('transactions')
-    .select('*')
-    .eq('user_id', currentUser.id)
-    .order('created_at', { ascending: false });
+   .from('transactions')
+   .select('*')
+   .eq('user_id', currentUser.id)
+   .order('created_at', { ascending: false });
 
     allTransactions = data || [];
     renderAll();
@@ -434,8 +462,8 @@ if (!window.__appInit) {
     });
 
     const spentThisMonth = allTransactions
-    .filter(t => t.type === 'expense' && t.created_at.startsWith(month))
-    .reduce((a, b) => a + b.amount, 0);
+   .filter(t => t.type === 'expense' && t.created_at.startsWith(month))
+   .reduce((a, b) => a + b.amount, 0);
 
     const percent = budget? Math.min(100, (spentThisMonth / budget) * 100) : 0;
     const barClass = percent > 80? 'danger' : percent > 60? 'warn' : '';
@@ -449,18 +477,18 @@ if (!window.__appInit) {
     document.getElementById('countHariIni').textContent = todayCount;
 
     document.getElementById('budgetList').innerHTML = budget > 0
-     ? `<div>Limit: ${formatMoney(budget)} | Terpakai: ${formatMoney(spentThisMonth)}</div>
+   ? `<div>Limit: ${formatMoney(budget)} | Terpakai: ${formatMoney(spentThisMonth)}</div>
          <div class="progress">
            <div class="progress-bar ${barClass}" style="width:${percent}%"></div>
-         </div>`
+       </div>`
       : '<div>Belum ada budget bulan ini</div>';
   }
 
   function renderTransactions() {
     let html = '';
     allTransactions
-    .filter(t => t.type!== 'budget')
-    .forEach(t => {
+   .filter(t => t.type!== 'budget')
+   .forEach(t => {
         const sign = t.type === 'income'? '+' : '-';
         const color = t.type === 'income'? 'green' : 'red';
         html += `
