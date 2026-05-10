@@ -155,6 +155,184 @@ document.getElementById('btnLogout').onclick = async () => {
 
 // Tampilkan halaman
 function showApp() {
+  document.getElementById('authPage').classList.add('hidden');
+  document.getElementById('appPage').classList.remove('hidden');
+}
+function showAuth() {
+  document.getElementById('authPage').classList.remove('hidden');
+  document.getElementById('appPage').classList.add('hidden');
+}
+
+// CRUD Transaksi
+document.getElementById('btnAdd').onclick = async () => {
+  const { error } = await supabase.from('transactions').insert([{
+    user_id: currentUser.id,
+    type: document.getElementById('type').value,
+    desc: document.getElementById('desc').value,
+    amount: parseFloat(document.getElementById('amount').value)
+  }]);
+  if (error) alert('Gagal simpan: ' + error.message);
+  else {
+    document.getElementById('desc').value = '';
+    document.getElementById('amount').value = '';
+    loadTransactions();
+  }
+};
+
+async function loadTransactions() {
+  const { data, error } = await supabase
+    .from('transactions')
+    .select('*')
+    .eq('user_id', currentUser.id)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error(error);
+    return;
+  }
+
+  let html = '';
+  let balance = 0;
+  
+  data.forEach(t => {
+    const sign = t.type === 'income' ? '+' : '-';
+    const cls = t.type === 'income' ? 'income' : 'expense';
+    balance += t.type === 'income' ? t.amount : -t.amount;
+    html += `<div class="item">
+      <div>
+        <div>${t.desc}</div>
+        <small>${new Date(t.created_at).toLocaleDateString('id-ID')}</small>
+      </div>
+      <div class="${cls}">${sign} Rp ${t.amount.toLocaleString('id-ID')}</div>
+    </div>`;
+  });
+  
+  document.getElementById('list').innerHTML = html || '<div>Belum ada transaksi</div>';
+  document.getElementById('balance').innerText = 'Rp ' + balance.toLocaleString('id-ID');
+}
+</script>
+</body>
+</html>  color: #e2e8f0; 
+  box-sizing: border-box;
+}
+button { 
+  background: #3b82f6; 
+  border: none; 
+  cursor: pointer; 
+  font-weight: 600;
+}
+button.danger { background: #ef4444; }
+button:hover { opacity: 0.9; }
+.hidden { display: none; }
+.item { 
+  display: flex; 
+  justify-content: space-between; 
+  padding: 12px 0; 
+  border-bottom: 1px solid #334155;
+}
+.income { color: #22c55e; }
+.expense { color: #ef4444; }
+.header { 
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center; 
+  margin-bottom: 16px;
+}
+h2, h3 { margin: 0 0 12px; }
+</style>
+</head>
+<body>
+<div class="container">
+  
+  <!-- Halaman Login -->
+  <div id="authPage" class="box">
+    <h2>Catat Duit</h2>
+    <input type="email" id="email" placeholder="Email">
+    <input type="password" id="password" placeholder="Password">
+    <button id="btnSignUp">Daftar</button>
+    <button id="btnLogin">Login</button>
+  </div>
+
+  <!-- Halaman App -->
+  <div id="appPage" class="hidden">
+    <div class="header">
+      <h2>Halo!</h2>
+      <button id="btnLogout" class="danger" style="width:auto; padding:8px 16px;">Logout</button>
+    </div>
+
+    <div class="box">
+      <h3>Total Saldo: <span id="balance">Rp 0</span></h3>
+    </div>
+
+    <div class="box">
+      <h3>Tambah Transaksi</h3>
+      <select id="type">
+        <option value="income">Pemasukan</option>
+        <option value="expense">Pengeluaran</option>
+      </select>
+      <input type="text" id="desc" placeholder="Keterangan">
+      <input type="number" id="amount" placeholder="Jumlah">
+      <button id="btnAdd">Simpan</button>
+    </div>
+
+    <div class="box">
+      <h3>Riwayat</h3>
+      <div id="list"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const SUPABASE_URL = 'https://wjzvnwkmmglgimamspwc.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_nfxU1mTiDHhQgDG_1U6eTQ_-7ePLctc';
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let currentUser = null;
+
+// Cek session saat buka halaman
+checkUser();
+
+async function checkUser() {
+  const { data: { user } = await supabase.auth.getUser();
+  if (user) {
+    currentUser = user;
+    showApp();
+    loadTransactions();
+  }
+}
+
+// Auth
+document.getElementById('btnSignUp').onclick = async () => {
+  const { error } = await supabase.auth.signUp({
+    email: email.value,
+    password: password.value
+  });
+  if (error) alert('Daftar gagal: ' + error.message);
+  else alert('Daftar sukses! Login sekarang.');
+};
+
+document.getElementById('btnLogin').onclick = async () => {
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email: email.value,
+    password: password.value
+  });
+  if (error) alert('Login gagal: ' + error.message);
+  else {
+    currentUser = data.user;
+    showApp();
+    loadTransactions();
+  }
+};
+
+document.getElementById('btnLogout').onclick = async () => {
+  await supabase.auth.signOut();
+  currentUser = null;
+  showAuth();
+};
+
+// Tampilkan halaman
+function showApp() {
   authPage.classList.add('hidden');
   appPage.classList.remove('hidden');
 }
