@@ -41,6 +41,7 @@ input, select, button, textarea {
 button {
   background: var(--primary); border: none; cursor: pointer; font-weight: 600; color: white;
 }
+button:disabled { opacity: 0.6; cursor: not-allowed; }
 button.danger { background: var(--danger); }
 button.warn { background: var(--warn); }
 button.ghost {
@@ -48,7 +49,7 @@ button.ghost {
   width: auto; padding: 8px 16px;
 }
 button.small { width: auto; padding: 6px 12px; font-size: 0.9rem; }
-button:hover { opacity: 0.9; }
+button:hover:not(:disabled) { opacity: 0.9; }
 .hidden { display: none; }
 .item {
   display: flex; justify-content: space-between; align-items: center;
@@ -185,6 +186,7 @@ img.proof { max-width: 100px; max-height: 100px; border-radius: 6px; cursor: poi
 
   let currentUser = null, chartInstance = null, currentBudget = 0;
   let allTransactions = [];
+  let isSaving = false;
 
   const categories = {
     income: ['Gaji', 'Bonus', 'Freelance', 'Investasi', 'Lainnya'],
@@ -230,8 +232,20 @@ img.proof { max-width: 100px; max-height: 100px; border-radius: 6px; cursor: poi
     document.getElementById(id).oninput = renderTransactions;
   });
 
-  // Auto scan receipt on file select
-  document.getElementById('receiptUpload').onchange = handleReceiptUpload;
+  // Rebind events biar gak duplikat
+  rebindEvents();
+
+  function rebindEvents() {
+    const btnAdd = document.getElementById('btnAdd');
+    const newBtnAdd = btnAdd.cloneNode(true);
+    btnAdd.parentNode.replaceChild(newBtnAdd, btnAdd);
+    newBtnAdd.onclick = handleManualSubmit;
+
+    const receiptInput = document.getElementById('receiptUpload');
+    const newReceiptInput = receiptInput.cloneNode(true);
+    receiptInput.parentNode.replaceChild(newReceiptInput, receiptInput);
+    newReceiptInput.onchange = handleReceiptUpload;
+  }
 
   function populateCategories() {
     const type = document.getElementById('type').value;
@@ -310,30 +324,27 @@ img.proof { max-width: 100px; max-height: 100px; border-radius: 6px; cursor: poi
     document.getElementById('appPage').classList.add('hidden');
   }
 
-  // Auto scan receipt and create transaction
+  // Auto scan receipt
   async function handleReceiptUpload(e) {
+    if (isSaving) return;
     const file = e.target.files[0];
     if (!file ||!file.type.startsWith('image/')) return;
 
+    isSaving = true;
     document.getElementById('scanStatus').classList.remove('hidden');
 
     try {
-      // Upload to storage first
       const path = `${currentUser.id}/${Date.now()}_${file.name}`;
       const { data: uploadData, error: uploadError } = await supabase.storage
-       .from('proofs')
-       .upload(path, file);
+      .from('proofs')
+      .upload(path, file);
 
       if (uploadError) throw uploadError;
 
-      // OCR the image
       const { data: ocr } = await Tesseract.recognize(file, 'jpn+eng');
       const text = ocr?.data?.text || '';
-
-      // Parse amount, date, store name from text
       const parsed = parseReceiptText(text);
 
-      // Auto create transaction
       const payload = {
         user_id: currentUser.id,
         type: 'expense',
@@ -349,9 +360,9 @@ img.proof { max-width: 100px; max-height: 100px; border-radius: 6px; cursor: poi
         if (error) throw error;
 
         alert(`Berhasil! ${payload.desc} - ${formatYen(payload.amount)}`);
-        loadTransactions();
-        loadBudget();
-        document.getElementById('receiptUpload').value = '';
+        await loadTransactions();
+        await loadBudget();
+        e.target.value = '';
       } else {
         alert('Gagal baca total. Coba foto yang lebih jelas.');
       }
@@ -359,18 +370,17 @@ img.proof { max-width: 100px; max-height: 100px; border-radius: 6px; cursor: poi
       console.error(err);
       alert('Gagal scan struk: ' + err.message);
     } finally {
+      isSaving = false;
       document.getElementById('scanStatus').classList.add('hidden');
     }
   }
 
-  // Simple OCR parser for Japanese receipts
   function parseReceiptText(text) {
     let amount = 0;
     let date = getToday();
     let store = 'Struk';
     let category = 'Belanja';
 
-    // Find amount: look for "合計", "Total", "¥", "￥" followed by numbers
     const amountMatches = text.match(/(合計|Total|¥|￥)\s*([\d,]+)/g);
     if (amountMatches) {
       const lastMatch = amountMatches[amountMatches.length - 1];
@@ -378,7 +388,6 @@ img.proof { max-width: 100px; max-height: 100px; border-radius: 6px; cursor: poi
       amount = parseInt(numStr) || 0;
     }
 
-    // Find date: YYYY/MM/DD or YYYY-MM-DD
     const dateMatch = text.match(/(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
     if (dateMatch) {
       const y = dateMatch[1];
@@ -387,7 +396,6 @@ img.proof { max-width: 100px; max-height: 100px; border-radius: 6px; cursor: poi
       date = `${y}-${m}-${d}`;
     }
 
-    // Guess category from store name
     const storeLine = text.split('\n')[0].toLowerCase();
     if (storeLine.includes('konbini') || storeLine.includes('lawson') || storeLine.includes('family')) {
       category = 'Makanan';
@@ -399,15 +407,58 @@ img.proof { max-width: 100px; max-height: 100px; border-radius: 6px; cursor: poi
     return { amount, date, store, category };
   }
 
+  // Manual submit
+  async function handleManualSubmit() {
+    if (isSaving) return;
+    isSaving = true;
+    const btn = document.getElementById('btnAdd');
+    btn.disabled = true;
+
+    try {
+      const id = document.getElementById('editId').value;
+      const dateVal = document.getElementById('txDate').value || getToday();
+
+      const payload = {
+        user_id: currentUser.id,
+        type: document.getElementById('type').value,
+        category: document.getElementById('category').value,
+        "desc": document.getElementById('desc').value,
+        amount: parseFloat(document.getElementById('amount').value) || 0,
+        created_at: dateVal,
+        proof_url: null
+      };
+
+      if (!payload.amount || payload.amount <= 0) {
+        alert('Jumlah harus lebih dari 0');
+        return;
+      }
+
+      const { error } = id
+      ? await supabase.from('transactions').update(payload).eq('id', id)
+        : await supabase.from('transactions').insert([payload]);
+
+      if (error) {
+        alert('Gagal simpan: ' + error.message);
+      } else {
+        resetForm();
+        await loadTransactions();
+        await loadBudget();
+      }
+    } finally {
+      isSaving = false;
+      btn.disabled = false;
+    }
+  }
+
   // Budget
   async function loadBudget() {
     const month = getMonth();
     const { data } = await supabase
-   .from('budgets')
-   .select('amount')
-   .eq('user_id', currentUser.id)
-   .eq('month', month)
-   .maybeSingle();
+  .from('budgets')
+  .select('amount')
+  .eq('user_id', currentUser.id)
+  .eq('month', month)
+  .maybeSingle();
     currentBudget = data?.amount || 0;
     renderBudget();
   }
@@ -421,7 +472,7 @@ img.proof { max-width: 100px; max-height: 100px; border-radius: 6px; cursor: poi
   };
   function renderBudget() {
     const spent = allTransactions.filter(t => t.type === 'expense' && t.created_at && t.created_at.startsWith(getMonth()))
-   .reduce((a, b) => a + (b.amount || 0), 0);
+  .reduce((a, b) => a + (b.amount || 0), 0);
     const percent = currentBudget? Math.min(100, (spent / currentBudget) * 100) : 0;
     const barClass = percent > 80? 'danger' : percent > 60? 'warn' : '';
 
@@ -430,33 +481,6 @@ img.proof { max-width: 100px; max-height: 100px; border-radius: 6px; cursor: poi
       <div class="progress"><div class="progress-bar ${barClass}" style="width:${percent}%"></div></div>
     `;
   }
-
-  // Manual Add/Edit/Delete
-  document.getElementById('btnAdd').onclick = async () => {
-    const id = document.getElementById('editId').value;
-    const dateVal = document.getElementById('txDate').value || getToday();
-
-    const payload = {
-      user_id: currentUser.id,
-      type: document.getElementById('type').value,
-      category: document.getElementById('category').value,
-      "desc": document.getElementById('desc').value,
-      amount: parseFloat(document.getElementById('amount').value) || 0,
-      created_at: dateVal,
-      proof_url: null
-    };
-
-    const { error } = id
-   ? await supabase.from('transactions').update(payload).eq('id', id)
-      : await supabase.from('transactions').insert([payload]);
-
-    if (error) alert('Gagal simpan: ' + error.message);
-    else {
-      resetForm();
-      loadTransactions();
-      loadBudget();
-    }
-  };
 
   function resetForm() {
     document.getElementById('editId').value = '';
@@ -491,10 +515,10 @@ img.proof { max-width: 100px; max-height: 100px; border-radius: 6px; cursor: poi
   // Load & Render
   async function loadTransactions() {
     const { data, error } = await supabase
-   .from('transactions')
-   .select('*')
-   .eq('user_id', currentUser.id)
-   .order('created_at', { ascending: false });
+  .from('transactions')
+  .select('*')
+  .eq('user_id', currentUser.id)
+  .order('created_at', { ascending: false });
 
     if (error) return console.error(error);
     allTransactions = data || [];
@@ -531,7 +555,7 @@ img.proof { max-width: 100px; max-height: 100px; border-radius: 6px; cursor: poi
       const sign = t.type === 'income'? '+' : '-';
       const cls = t.type === 'income'? 'income' : 'expense';
       const proof = t.proof_url
-     ? `<img src="${supabase.storage.from('proofs').getPublicUrl(t.proof_url).data.publicUrl}" class="proof" onclick="window.open(this.src)">`
+    ? `<img src="${supabase.storage.from('proofs').getPublicUrl(t.proof_url).data.publicUrl}" class="proof" onclick="window.open(this.src)">`
         : '';
 
       html += `<div class="item">
@@ -590,8 +614,8 @@ img.proof { max-width: 100px; max-height: 100px; border-radius: 6px; cursor: poi
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('/sw.js')
-      .then(reg => console.log('SW registered'))
-      .catch(err => console.log('SW failed:', err));
+     .then(reg => console.log('SW registered'))
+     .catch(err => console.log('SW failed:', err));
     });
   }
 })();
