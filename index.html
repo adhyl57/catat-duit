@@ -153,7 +153,8 @@ img.proof { max-width: 100px; max-height: 100px; border-radius: 6px; cursor: poi
       <canvas id="chart" height="200"></canvas>
     </div>
 
-    <div class="box">
+    <!-- Form manual sekarang pakai <form> -->
+    <form id="txForm" class="box">
       <h3>Tambah/Edit Transaksi Manual</h3>
       <input type="hidden" id="editId">
       <select id="type">
@@ -164,9 +165,9 @@ img.proof { max-width: 100px; max-height: 100px; border-radius: 6px; cursor: poi
       <input type="text" id="desc" placeholder="Keterangan opsional">
       <input type="number" id="amount" placeholder="Jumlah">
       <input type="date" id="txDate">
-      <button id="btnAdd">Simpan</button>
-      <button id="btnCancelEdit" class="ghost hidden">Batal Edit</button>
-    </div>
+      <button type="submit" id="btnAdd">Simpan</button>
+      <button type="button" id="btnCancelEdit" class="ghost hidden">Batal Edit</button>
+    </form>
 
     <div class="box">
       <h3>Riwayat</h3>
@@ -177,7 +178,6 @@ img.proof { max-width: 100px; max-height: 100px; border-radius: 6px; cursor: poi
 </div>
 
 <script>
-// Cegah double init
 if (!window.__catatDuitAppInit) {
   window.__catatDuitAppInit = true;
 
@@ -202,7 +202,6 @@ if (!window.__catatDuitAppInit) {
   const getToday = () => new Date().toISOString().split('T')[0];
   const getMonth = () => new Date().toISOString().slice(0, 7);
 
-  // Theme
   const themeKey = 'theme';
   const savedTheme = localStorage.getItem(themeKey) || 'dark';
   document.documentElement.setAttribute('data-theme', savedTheme);
@@ -225,7 +224,6 @@ if (!window.__catatDuitAppInit) {
     if (chartInstance) drawChart(window._chartData || {});
   }
 
-  // Init sekali aja
   initApp();
 
   function initApp() {
@@ -234,16 +232,17 @@ if (!window.__catatDuitAppInit) {
     populateCategories();
     document.getElementById('type').onchange = populateCategories;
     document.getElementById('filterMonth').value = getMonth();
+
     ['filterType', 'filterCategory', 'searchDesc', 'filterMonth'].forEach(id => {
       const el = document.getElementById(id);
       el.onchange = renderTransactions;
       el.oninput = renderTransactions;
     });
 
-    // Bind event pakai addEventListener + removeEventListener biar gak double
-    const btnAdd = document.getElementById('btnAdd');
-    btnAdd.removeEventListener('click', handleManualSubmit);
-    btnAdd.addEventListener('click', handleManualSubmit);
+    // FIX DOUBLE: pakai form submit, unbind dulu
+    const txForm = document.getElementById('txForm');
+    txForm.removeEventListener('submit', handleManualSubmit);
+    txForm.addEventListener('submit', handleManualSubmit);
 
     const receiptInput = document.getElementById('receiptUpload');
     receiptInput.removeEventListener('change', handleReceiptUpload);
@@ -274,6 +273,7 @@ if (!window.__catatDuitAppInit) {
     else if (hour < 17) g = 'Konnichiwa';
     return `${g} ${name}-san`;
   }
+
   function getDisplayName(user) {
     return user?.user_metadata?.name || user?.email?.split('@')[0] || 'User';
   }
@@ -288,21 +288,22 @@ if (!window.__catatDuitAppInit) {
       loadTransactions();
     }
   }
+
   function updateGreeting() {
     document.getElementById('greeting').textContent = getJapaneseGreeting(getDisplayName(currentUser));
   }
+
   function setTodayDate() {
     document.getElementById('txDate').value = getToday();
   }
 
-  // Auth
   async function handleSignUp() {
     const { error } = await supabase.auth.signUp({
       email: document.getElementById('email').value,
       password: document.getElementById('password').value
     });
     alert(error? 'Daftar gagal: ' + error.message : 'Daftar sukses! Login sekarang.');
-  };
+  }
 
   async function handleLogin() {
     const { data, error } = await supabase.auth.signInWithPassword({
@@ -318,25 +319,25 @@ if (!window.__catatDuitAppInit) {
       loadTransactions();
       setTodayDate();
     }
-  };
+  }
 
   async function handleLogout() {
     await supabase.auth.signOut();
     currentUser = null;
     showAuth();
     if (chartInstance) chartInstance.destroy();
-  };
+  }
 
   function showApp() {
     document.getElementById('authPage').classList.add('hidden');
     document.getElementById('appPage').classList.remove('hidden');
   }
+
   function showAuth() {
     document.getElementById('authPage').classList.remove('hidden');
     document.getElementById('appPage').classList.add('hidden');
   }
 
-  // Auto scan receipt
   async function handleReceiptUpload(e) {
     if (isSaving) return;
     const file = e.target.files[0];
@@ -349,8 +350,8 @@ if (!window.__catatDuitAppInit) {
     try {
       const path = `${currentUser.id}/${Date.now()}_${file.name}`;
       const { data: uploadData, error: uploadError } = await supabase.storage
-     .from('proofs')
-     .upload(path, file);
+      .from('proofs')
+      .upload(path, file);
 
       if (uploadError) throw uploadError;
 
@@ -421,10 +422,10 @@ if (!window.__catatDuitAppInit) {
     return { amount, date, store, category };
   }
 
-  // Manual submit
   async function handleManualSubmit(e) {
     e.preventDefault();
     if (isSaving) return;
+
     isSaving = true;
     const btn = document.getElementById('btnAdd');
     btn.disabled = true;
@@ -449,7 +450,7 @@ if (!window.__catatDuitAppInit) {
       }
 
       const { error } = id
-     ? await supabase.from('transactions').update(payload).eq('id', id)
+      ? await supabase.from('transactions').update(payload).eq('id', id)
         : await supabase.from('transactions').insert([payload]);
 
       if (error) {
@@ -459,6 +460,8 @@ if (!window.__catatDuitAppInit) {
         await loadTransactions();
         await loadBudget();
       }
+    } catch(err) {
+      alert('Error: ' + err.message);
     } finally {
       isSaving = false;
       btn.disabled = false;
@@ -474,22 +477,21 @@ if (!window.__catatDuitAppInit) {
     loadTransactions();
   }
 
-  // Budget
   async function loadBudget() {
     const month = getMonth();
     const { data } = await supabase
- .from('budgets')
- .select('amount')
- .eq('user_id', currentUser.id)
- .eq('month', month)
- .maybeSingle();
+    .from('budgets')
+    .select('amount')
+    .eq('user_id', currentUser.id)
+    .eq('month', month)
+    .maybeSingle();
     currentBudget = data?.amount || 0;
     renderBudget();
   }
 
   function renderBudget() {
     const spent = allTransactions.filter(t => t.type === 'expense' && t.created_at && t.created_at.startsWith(getMonth()))
- .reduce((a, b) => a + (b.amount || 0), 0);
+    .reduce((a, b) => a + (b.amount || 0), 0);
     const percent = currentBudget? Math.min(100, (spent / currentBudget) * 100) : 0;
     const barClass = percent > 80? 'danger' : percent > 60? 'warn' : '';
 
@@ -528,16 +530,28 @@ if (!window.__catatDuitAppInit) {
     window.scrollTo(0, document.getElementById('btnAdd').offsetTop);
   }
 
-  // Load & Render
   async function loadTransactions() {
-    const { data, error } = await supabase
- .from('transactions')
- .select('*')
- .eq('user_id', currentUser.id)
- .order('created_at', { ascending: false });
+    if (!currentUser) return;
+    allTransactions = [];
 
-    if (error) return console.error(error);
-    allTransactions = data || [];
+    const { data, error } = await supabase
+    .from('transactions')
+    .select('*')
+    .eq('user_id', currentUser.id)
+    .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error(error);
+      return;
+    }
+
+    const seen = new Set();
+    allTransactions = (data || []).filter(t => {
+      if (seen.has(t.id)) return false;
+      seen.add(t.id);
+      return true;
+    });
+
     renderTransactions();
     renderBudget();
   }
@@ -561,6 +575,8 @@ if (!window.__catatDuitAppInit) {
     const catTotals = {};
     let html = '';
 
+    document.getElementById('list').innerHTML = '';
+
     filtered.forEach(t => {
       if (t.type === 'income') income += t.amount || 0;
       else {
@@ -571,7 +587,7 @@ if (!window.__catatDuitAppInit) {
       const sign = t.type === 'income'? '+' : '-';
       const cls = t.type === 'income'? 'income' : 'expense';
       const proof = t.proof_url
-   ? `<img src="${supabase.storage.from('proofs').getPublicUrl(t.proof_url).data.publicUrl}" class="proof" onclick="window.open(this.src)">`
+      ? `<img src="${supabase.storage.from('proofs').getPublicUrl(t.proof_url).data.publicUrl}" class="proof" onclick="window.open(this.src)">`
         : '';
 
       html += `<div class="item">
@@ -626,12 +642,11 @@ if (!window.__catatDuitAppInit) {
   window.deleteTransaction = deleteTransaction;
   window.editTransaction = editTransaction;
 
-  // Register SW sekali aja
   if ('serviceWorker' in navigator &&!navigator.serviceWorker.controller) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('/sw.js')
-    .then(reg => console.log('SW registered'))
-    .catch(err => console.log('SW failed:', err));
+      .then(reg => console.log('SW registered'))
+      .catch(err => console.log('SW failed:', err));
     });
   }
 }
