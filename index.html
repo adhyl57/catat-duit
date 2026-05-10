@@ -17,21 +17,25 @@
   --green: #10b981; --red: #ef4444; --purple: #8b5cf6; --warn: #f59e0b; --danger: #ef4444;
 }
 [data-theme="dark"] {
-  --bg: #0f172a; --card: #1e293b; --text: #e2e8f0; --subtext: #94a3b8; --border: #334155;
+  --bg: #0f172a; --card: #1e293b; --text: #f1f5f9; --subtext: #cbd5e1; --border: #475569;
+  --green: #34d399; --red: #f87171; --warn: #fbbf24; --danger: #f87171;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
 body { background: var(--bg); color: var(--text); padding-bottom: 80px; transition: 0.2s; }
 .container { max-width: 500px; margin: 0 auto; padding: 16px; }
 
-.header { font-size: 20px; font-weight: 700; margin: 8px 0 16px; }
+.header { font-size: 20px; font-weight: 700; margin: 8px 0 16px; color: var(--text); }
 
 .card {
   background: var(--card); border-radius: 16px; padding: 16px; margin-bottom: 12px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid var(--border);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2); border: 1px solid var(--border);
 }
 .card.green {
   background: linear-gradient(135deg, #10b981, #059669); color: white; border: none;
+}
+[data-theme="dark"].card.green {
+  background: linear-gradient(135deg, #059669, #047857);
 }
 .card.green h1 { font-size: 32px; font-weight: 700; margin: 4px 0; }
 
@@ -45,18 +49,26 @@ body { background: var(--bg); color: var(--text); padding-bottom: 80px; transiti
 .mini-card {
   background: var(--card); border-radius: 12px; padding: 12px; border: 2px solid var(--border);
 }
-.mini-card.green { border-color: #d1fae5; background: #ecfdf5; }
-.mini-card.red { border-color: #fee2e2; background: #fef2f2; }
-[data-theme="dark"].mini-card.green { background: #064e3b; border-color: #065f46; }
-[data-theme="dark"].mini-card.red { background: #7f1d1d; border-color: #991b1b; }
+.mini-card.green {
+  border-color: var(--green);
+  background: rgba(16, 185, 129, 0.1);
+}
+.mini-card.red {
+  border-color: var(--red);
+  background: rgba(239, 68, 68, 0.1);
+}
 .mini-card.amt { font-size: 18px; font-weight: 700; }
+.mini-card.green.amt { color: var(--green); }
+.mini-card.red.amt { color: var(--red); }
+.mini-card div:first-child { color: var(--subtext); font-size: 13px; }
 
 .btn {
   padding: 12px 16px; border-radius: 10px; border: none; font-weight: 600; cursor: pointer;
+  color: white;
 }
-.btn.green { background: var(--green); color: white; }
+.btn.green { background: var(--green); }
 .btn.purple {
-  background: linear-gradient(90deg, #8b5cf6, #ec4899); color: white; width: 100%;
+  background: linear-gradient(90deg, #8b5cf6, #ec4899); width: 100%;
   padding: 14px; border-radius: 12px; font-size: 15px;
 }
 .btn.outline {
@@ -67,7 +79,7 @@ body { background: var(--bg); color: var(--text); padding-bottom: 80px; transiti
 .bottom-nav {
   position: fixed; bottom: 0; left: 0; right: 0; background: var(--card);
   display: flex; justify-content: space-around; padding: 10px 0;
-  box-shadow: 0 -2px 8px rgba(0,0,0,0.1); border-top: 1px solid var(--border);
+  box-shadow: 0 -2px 8px rgba(0,0,0,0.3); border-top: 1px solid var(--border);
 }
 .nav-item {
   text-align: center; font-size: 12px; color: var(--subtext); cursor: pointer;
@@ -79,6 +91,8 @@ input, select {
   width: 100%; padding: 12px; margin: 8px 0; border-radius: 10px;
   border: 1px solid var(--border); background: var(--bg); color: var(--text);
 }
+input::placeholder { color: var(--subtext); }
+
 .hidden { display: none; }
 .section-title { font-size: 14px; color: var(--subtext); margin: 16px 0 8px; text-align: center; }
 .page { display: none; }
@@ -122,7 +136,6 @@ input:checked ~.switch { background: var(--green); }
 </div>
 
 <div id="appPage" class="hidden">
-  <!-- Halaman Beranda -->
   <div id="page-home" class="page active">
     <div class="container">
       <div class="header">Catat Uang</div>
@@ -157,11 +170,11 @@ input:checked ~.switch { background: var(--green); }
       <div class="section-title">--- Hari Ini ---</div>
       <div class="grid2">
         <div class="mini-card green">
-          <div style="font-size:13px;">📈 Masuk</div>
+          <div>Masuk</div>
           <div class="amt" id="masukHariIni">¥0</div>
         </div>
         <div class="mini-card red">
-          <div style="font-size:13px;">📉 Keluar</div>
+          <div>Keluar</div>
           <div class="amt" id="keluarHariIni">¥0</div>
         </div>
       </div>
@@ -186,7 +199,6 @@ input:checked ~.switch { background: var(--green); }
     </div>
   </div>
 
-  <!-- Halaman Transaksi -->
   <div id="page-transaksi" class="page">
     <div class="container">
       <div class="header">Transaksi</div>
@@ -194,7 +206,6 @@ input:checked ~.switch { background: var(--green); }
     </div>
   </div>
 
-  <!-- Halaman Pengaturan -->
   <div id="page-pengaturan" class="page">
     <div class="container">
       <div class="header">Pengaturan</div>
@@ -370,11 +381,11 @@ if (!window.__appInit) {
     }
 
     await supabase
-     .from('transactions')
-     .delete()
-     .eq('user_id', currentUser.id)
-     .eq('type', 'budget')
-     .like('created_at', month + '%');
+    .from('transactions')
+    .delete()
+    .eq('user_id', currentUser.id)
+    .eq('type', 'budget')
+    .like('created_at', month + '%');
 
     const { error } = await supabase.from('transactions').insert([{
       user_id: currentUser.id,
@@ -387,17 +398,17 @@ if (!window.__appInit) {
 
     if (error) alert('Gagal simpan budget: ' + error.message);
     else {
-      loadData();
+      await loadData();
       alert('Budget bulan ' + month + ' disimpan!');
     }
   }
 
   async function loadData() {
     const { data } = await supabase
-     .from('transactions')
-     .select('*')
-     .eq('user_id', currentUser.id)
-     .order('created_at', { ascending: false });
+    .from('transactions')
+    .select('*')
+    .eq('user_id', currentUser.id)
+    .order('created_at', { ascending: false });
 
     allTransactions = data || [];
     renderAll();
@@ -423,8 +434,8 @@ if (!window.__appInit) {
     });
 
     const spentThisMonth = allTransactions
-     .filter(t => t.type === 'expense' && t.created_at.startsWith(month))
-     .reduce((a, b) => a + b.amount, 0);
+    .filter(t => t.type === 'expense' && t.created_at.startsWith(month))
+    .reduce((a, b) => a + b.amount, 0);
 
     const percent = budget? Math.min(100, (spentThisMonth / budget) * 100) : 0;
     const barClass = percent > 80? 'danger' : percent > 60? 'warn' : '';
@@ -437,19 +448,19 @@ if (!window.__appInit) {
     document.getElementById('keluarHariIni').textContent = formatMoney(todayExpense);
     document.getElementById('countHariIni').textContent = todayCount;
 
-    document.getElementById('budgetList').innerHTML = `
-      <div>Limit: ${formatMoney(budget)} | Terpakai: ${formatMoney(spentThisMonth)}</div>
-      <div class="progress">
-        <div class="progress-bar ${barClass}" style="width:${percent}%"></div>
-      </div>
-    `;
+    document.getElementById('budgetList').innerHTML = budget > 0
+     ? `<div>Limit: ${formatMoney(budget)} | Terpakai: ${formatMoney(spentThisMonth)}</div>
+         <div class="progress">
+           <div class="progress-bar ${barClass}" style="width:${percent}%"></div>
+         </div>`
+      : '<div>Belum ada budget bulan ini</div>';
   }
 
   function renderTransactions() {
     let html = '';
     allTransactions
-     .filter(t => t.type!== 'budget')
-     .forEach(t => {
+    .filter(t => t.type!== 'budget')
+    .forEach(t => {
         const sign = t.type === 'income'? '+' : '-';
         const color = t.type === 'income'? 'green' : 'red';
         html += `
