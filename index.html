@@ -29,7 +29,7 @@ body { background: var(--bg); color: var(--text); padding-bottom: 80px; transiti
 
 .card {
   background: var(--card); border-radius: 16px; padding: 16px; margin-bottom: 12px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.2); border: 1px solid var(--border);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15); border: 1px solid var(--border);
 }
 .card.green {
   background: linear-gradient(135deg, #10b981, #059669); color: white; border: none;
@@ -46,39 +46,67 @@ body { background: var(--bg); color: var(--text); padding-bottom: 80px; transiti
 .value.red { color: var(--red); font-weight: 600; }
 
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+/* FIX MINICARD KONTRAS */
 .mini-card {
   background: var(--card);
   border-radius: 12px;
   padding: 12px;
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
+  transition: 0.2s;
 }
+
+/* LIGHT MODE */
 .mini-card.green {
+  border-color: #10b981;
+  background: #ecfdf5;
+}
+.mini-card.red {
+  border-color: #ef4444;
+  background: #fef2f2;
+}
+.mini-card.green.amt { color: #059669; }
+.mini-card.red.amt { color: #dc2626; }
+.mini-card.label {
+  color: #374151;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* DARK MODE */
+[data-theme="dark"].mini-card.green {
   border-color: #34d399;
   background: #064e3b;
 }
-.mini-card.red {
+[data-theme="dark"].mini-card.red {
   border-color: #f87171;
   background: #7f1d1d;
 }
-[data-theme="dark"].mini-card div:first-child {
+[data-theme="dark"].mini-card.label {
   color: #e2e8f0;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 [data-theme="dark"].mini-card.amt {
   color: #ffffff;
   font-size: 18px;
   font-weight: 700;
 }
+
 .mini-card.amt {
   font-size: 18px;
   font-weight: 700;
+  margin-top: 4px;
 }
-.mini-card.green.amt { color: var(--green); }
-.mini-card.red.amt { color: var(--red); }
-.mini-card div:first-child {
-  color: var(--subtext);
-  font-size: 13px;
+.mini-card.icon {
+  font-size: 18px;
+  line-height: 1;
 }
 
 .btn {
@@ -189,11 +217,11 @@ input:checked ~.switch { background: var(--green); }
       <div class="section-title">--- Hari Ini ---</div>
       <div class="grid2">
         <div class="mini-card green">
-          <div>Masuk</div>
+          <div class="label"><span class="icon">📈</span>Masuk</div>
           <div class="amt" id="masukHariIni">¥0</div>
         </div>
         <div class="mini-card red">
-          <div>Keluar</div>
+          <div class="label"><span class="icon">📉</span>Keluar</div>
           <div class="amt" id="keluarHariIni">¥0</div>
         </div>
       </div>
@@ -402,12 +430,12 @@ if (!window.__appInit) {
     }
 
     const { error: delErr } = await supabase
-   .from('transactions')
-   .delete()
-   .eq('user_id', currentUser.id)
-   .eq('type', 'budget')
-   .gte('created_at', start)
-   .lte('created_at', end);
+  .from('transactions')
+  .delete()
+  .eq('user_id', currentUser.id)
+  .eq('type', 'budget')
+  .gte('created_at', start)
+  .lte('created_at', end);
 
     if (delErr) {
       alert('Gagal hapus budget lama: ' + delErr.message);
@@ -433,10 +461,10 @@ if (!window.__appInit) {
 
   async function loadData() {
     const { data } = await supabase
-   .from('transactions')
-   .select('*')
-   .eq('user_id', currentUser.id)
-   .order('created_at', { ascending: false });
+  .from('transactions')
+  .select('*')
+  .eq('user_id', currentUser.id)
+  .order('created_at', { ascending: false });
 
     allTransactions = data || [];
     renderAll();
@@ -462,8 +490,8 @@ if (!window.__appInit) {
     });
 
     const spentThisMonth = allTransactions
-   .filter(t => t.type === 'expense' && t.created_at.startsWith(month))
-   .reduce((a, b) => a + b.amount, 0);
+  .filter(t => t.type === 'expense' && t.created_at.startsWith(month))
+  .reduce((a, b) => a + b.amount, 0);
 
     const percent = budget? Math.min(100, (spentThisMonth / budget) * 100) : 0;
     const barClass = percent > 80? 'danger' : percent > 60? 'warn' : '';
@@ -477,7 +505,7 @@ if (!window.__appInit) {
     document.getElementById('countHariIni').textContent = todayCount;
 
     document.getElementById('budgetList').innerHTML = budget > 0
-   ? `<div>Limit: ${formatMoney(budget)} | Terpakai: ${formatMoney(spentThisMonth)}</div>
+  ? `<div>Limit: ${formatMoney(budget)} | Terpakai: ${formatMoney(spentThisMonth)}</div>
          <div class="progress">
            <div class="progress-bar ${barClass}" style="width:${percent}%"></div>
        </div>`
@@ -487,8 +515,8 @@ if (!window.__appInit) {
   function renderTransactions() {
     let html = '';
     allTransactions
-   .filter(t => t.type!== 'budget')
-   .forEach(t => {
+  .filter(t => t.type!== 'budget')
+  .forEach(t => {
         const sign = t.type === 'income'? '+' : '-';
         const color = t.type === 'income'? 'green' : 'red';
         html += `
