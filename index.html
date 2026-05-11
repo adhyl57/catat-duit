@@ -1,87 +1,33 @@
 <!DOCTYPE html>
-<html lang="id">
+<html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Test Supabase</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<style>
-body{font-family:sans-serif;padding:20px}
-input,button{width:100%;padding:12px;margin:8px 0;border-radius:8px;border:1px solid #ccc}
-button{background:#10b981;color:white;border:none;cursor:pointer}
-#log{background:#111;color:#0f0;padding:10px;margin-top:20px;font-family:monospace;white-space:pre-wrap}
-</style>
+<title>Test</title>
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 </head>
-<body>
-<h2>Test Login</h2>
-<input type="email" id="email" placeholder="Email" value="test@test.com">
-<input type="password" id="password" placeholder="Password" value="123456">
-<button id="btnLogin">Login</button>
-<button id="btnSignUp">Daftar</button>
-
-<div id="log">Log:\n</div>
+<body style="padding:20px">
+<h2>Test</h2>
+<button onclick="test()">Klik</button>
+<div id="log" style="background:#000;color:#0f0;padding:10px;margin-top:10px">Log: </div>
 
 <script>
 const logEl = document.getElementById('log');
-function log(msg){
-  console.log(msg);
-  logEl.textContent += msg + '\n';
+function log(m){ logEl.textContent += m + '\n'; }
+
+log('Script jalan');
+
+const supabase = supabase.createClient(
+  'https://wjzvnwkmmglgimamspwc.supabase.co',
+  'sb_publishable_nfxU1mTiDHhQgDG_1U6eTQ_-7ePLctc'
+);
+log('Supabase init OK');
+
+async function test(){
+  log('Klik tombol');
+  const {data, error} = await supabase.auth.getSession();
+  log(error ? 'Error: '+error.message : 'Session: '+JSON.stringify(data));
 }
-
-log('1. Script mulai jalan');
-
-const SUPABASE_URL = 'https://wjzvnwkmmglgimamspwc.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_nfxU1mTiDHhQgDG_1U6eTQ_-7ePLctc';
-
-let supabase;
-try{
-  supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-  log('2. Supabase client OK');
-}catch(e){
-  log('2. Supabase ERROR: ' + e.message);
-}
-
-document.getElementById('btnLogin').onclick = async () => {
-  log('3. Tombol Login diklik');
-  const email = document.getElementById('email').value;
-  const pass = document.getElementById('password').value;
-  
-  try{
-    log('4. Kirim request ke Supabase...');
-    const {data, error} = await supabase.auth.signInWithPassword({email, password:pass});
-    if(error){
-      log('5. ERROR: ' + error.message);
-    }else{
-      log('5. SUKSES: ' + JSON.stringify(data.user));
-    }
-  }catch(e){
-    log('5. CATCH ERROR: ' + e.message);
-  }
-}
-
-document.getElementById('btnSignUp').onclick = async () => {
-  log('3. Tombol Daftar diklik');
-  const email = document.getElementById('email').value;
-  const pass = document.getElementById('password').value;
-  
-  try{
-    log('4. Kirim request signup ke Supabase...');
-    const {data, error} = await supabase.auth.signUp({
-      email, 
-      password:pass,
-      options:{emailRedirectTo:'https://ctt-duit-tau.vercel.app'}
-    });
-    if(error){
-      log('5. ERROR: ' + error.message);
-    }else{
-      log('5. SUKSES: Cek email buat verifikasi');
-    }
-  }catch(e){
-    log('5. CATCH ERROR: ' + e.message);
-  }
-}
-
-log('6. Event listener siap');
 </script>
 </body>
 </html>
