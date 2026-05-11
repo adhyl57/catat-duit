@@ -15,48 +15,65 @@
 :root {
   --bg: #f3f4f6; --card: #ffffff; --text: #1f2937; --subtext: #6b7280; --border: #e5e7eb;
   --green: #10b981; --red: #ef4444; --purple: #8b5cf6; --warn: #f59e0b; --danger: #ef4444;
+  --shadow: 0 4px 12px rgba(0,0,0,0.08);
 }
 [data-theme="dark"] {
   --bg: #0f172a; --card: #1e293b; --text: #f1f5f9; --subtext: #cbd5e1; --border: #475569;
   --green: #34d399; --red: #f87171; --warn: #fbbf24; --danger: #f87171;
+  --shadow: 0 4px 12px rgba(0,0,0,0.4);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
-body { background: var(--bg); color: var(--text); padding-bottom: 80px; transition: 0.2s; }
-.container { max-width: 500px; margin: 0 auto; padding: 16px; }
+body { background: var(--bg); color: var(--text); padding-bottom: 90px; transition: 0.3s; }
+.container { max-width: 500px; margin: 0 auto; padding: 16px; animation: fadeIn 0.4s ease; }
+@keyframes fadeIn { from {opacity:0; transform: translateY(10px);} to {opacity:1; transform: translateY(0);} }
+@keyframes slideDown { from {opacity:0; transform: translateY(-20px);} to {opacity:1; transform: translateY(0);} }
+@keyframes slideUp { from {opacity:1; transform: translateY(0);} to {opacity:0; transform: translateY(-20px);} }
 
-.header { font-size: 20px; font-weight: 700; margin: 8px 0 16px; color: var(--text); }
+.header-wrap {
+  display: flex; justify-content: space-between; align-items: center;
+  margin: 8px 0 20px;
+}
+.header { font-size: 22px; font-weight: 700; }
+.greeting { font-size: 13px; color: var(--subtext); }
+.date { font-size: 12px; color: var(--subtext); }
 
 .card {
-  background: var(--card); border-radius: 16px; padding: 16px; margin-bottom: 12px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.15); border: 1px solid var(--border);
+  background: var(--card); border-radius: 18px; padding: 18px; margin-bottom: 14px;
+  box-shadow: var(--shadow); border: 1px solid var(--border);
+  transition: transform 0.2s, box-shadow 0.2s;
 }
+.card:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,0.12); }
 .card.green {
   background: linear-gradient(135deg, #10b981, #059669); color: white; border: none;
+  position: relative; overflow: hidden;
 }
 [data-theme="dark"].card.green {
   background: linear-gradient(135deg, #059669, #047857);
 }
-.card.green h1 { font-size: 32px; font-weight: 700; margin: 4px 0; }
+.card.green h1 { font-size: 34px; font-weight: 700; margin: 6px 0; }
 
-.row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; }
+.sparkline {
+  width: 100%; height: 40px; margin-top: 8px; opacity: 0.9;
+}
+
+.row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; }
 .row +.row { border-top: 1px solid var(--border); }
-.label { display: flex; align-items: center; gap: 8px; color: var(--subtext); }
-.value.green { color: var(--green); font-weight: 600; }
-.value.red { color: var(--red); font-weight: 600; }
+.label { display: flex; align-items: center; gap: 8px; color: var(--subtext); font-weight: 500; }
+.value.green { color: var(--green); font-weight: 700; }
+.value.red { color: var(--red); font-weight: 700; }
 
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
-/* FIX MINICARD KONTRAS */
 .mini-card {
   background: var(--card);
-  border-radius: 12px;
-  padding: 12px;
+  border-radius: 16px;
+  padding: 14px;
   border: 2px solid var(--border);
   transition: 0.2s;
 }
+.mini-card:hover { transform: translateY(-2px); }
 
-/* LIGHT MODE */
 .mini-card.green {
   border-color: #10b981;
   background: #ecfdf5;
@@ -65,18 +82,6 @@ body { background: var(--bg); color: var(--text); padding-bottom: 80px; transiti
   border-color: #ef4444;
   background: #fef2f2;
 }
-.mini-card.green.amt { color: #059669; }
-.mini-card.red.amt { color: #dc2626; }
-.mini-card.label {
-  color: #374151;
-  font-size: 13px;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-/* DARK MODE */
 [data-theme="dark"].mini-card.green {
   border-color: #34d399;
   background: #064e3b;
@@ -85,63 +90,81 @@ body { background: var(--bg); color: var(--text); padding-bottom: 80px; transiti
   border-color: #f87171;
   background: #7f1d1d;
 }
-[data-theme="dark"].mini-card.label {
-  color: #e2e8f0;
+.mini-card.label {
+  color: #374151;
   font-size: 13px;
   font-weight: 600;
   display: flex;
   align-items: center;
   gap: 6px;
 }
-[data-theme="dark"].mini-card.amt {
-  color: #ffffff;
-  font-size: 18px;
-  font-weight: 700;
+[data-theme="dark"].mini-card.label {
+  color: #e2e8f0;
 }
-
 .mini-card.amt {
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 700;
   margin-top: 4px;
 }
-.mini-card.icon {
-  font-size: 18px;
-  line-height: 1;
-}
+[data-theme="dark"].mini-card.amt { color: #ffffff; }
+.mini-card.green.amt { color: #059669; }
+.mini-card.red.amt { color: #dc2626; }
+.mini-card.icon { font-size: 20px; }
 
 .btn {
-  padding: 12px 16px; border-radius: 10px; border: none; font-weight: 600; cursor: pointer;
-  color: white;
+  padding: 12px 16px; border-radius: 12px; border: none; font-weight: 600; cursor: pointer;
+  color: white; transition: 0.2s;
 }
+.btn:hover { transform: scale(1.02); }
 .btn.green { background: var(--green); }
-.btn.purple {
-  background: linear-gradient(90deg, #8b5cf6, #ec4899); width: 100%;
-  padding: 14px; border-radius: 12px; font-size: 15px;
-}
 .btn.outline {
-  background: transparent; border: 1px solid var(--border); color: var(--text);
+  background: transparent; border: 1.5px solid var(--border); color: var(--text);
 }
 .btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
+.fab {
+  position: fixed;
+  bottom: 90px;
+  right: 20px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--green);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  box-shadow: 0 6px 16px rgba(16,185,129,0.4);
+  cursor: pointer;
+  z-index: 100;
+  transition: 0.2s;
+}
+.fab:hover { transform: scale(1.1); }
+
 .bottom-nav {
   position: fixed; bottom: 0; left: 0; right: 0; background: var(--card);
-  display: flex; justify-content: space-around; padding: 10px 0;
-  box-shadow: 0 -2px 8px rgba(0,0,0,0.3); border-top: 1px solid var(--border);
+  display: flex; justify-content: space-around; padding: 12px 0;
+  box-shadow: 0 -4px 12px rgba(0,0,0,0.1); border-top: 1px solid var(--border);
+  backdrop-filter: blur(10px);
 }
 .nav-item {
   text-align: center; font-size: 12px; color: var(--subtext); cursor: pointer;
+  transition: 0.2s;
 }
-.nav-item.active { color: var(--green); }
+.nav-item.active { color: var(--green); transform: scale(1.05); }
 .nav-item svg { width: 24px; height: 24px; margin-bottom: 2px; }
 
 input, select {
-  width: 100%; padding: 12px; margin: 8px 0; border-radius: 10px;
-  border: 1px solid var(--border); background: var(--bg); color: var(--text);
+  width: 100%; padding: 13px; margin: 8px 0; border-radius: 12px;
+  border: 1.5px solid var(--border); background: var(--bg); color: var(--text);
+  font-size: 15px;
 }
+input:focus, select:focus { outline: none; border-color: var(--green); }
 input::placeholder { color: var(--subtext); }
 
 .hidden { display: none; }
-.section-title { font-size: 14px; color: var(--subtext); margin: 16px 0 8px; text-align: center; }
+.section-title { font-size: 14px; color: var(--subtext); margin: 18px 0 10px; text-align: center; font-weight: 600; }
 .page { display: none; }
 .page.active { display: block; }
 
@@ -149,52 +172,131 @@ input::placeholder { color: var(--subtext); }
   display: flex; align-items: center; justify-content: space-between;
 }
 .switch {
-  position: relative; width: 50px; height: 28px; background: var(--border);
-  border-radius: 999px; cursor: pointer; transition: 0.2s;
+  position: relative; width: 54px; height: 30px; background: var(--border);
+  border-radius: 999px; cursor: pointer; transition: 0.3s;
 }
 .switch input { display: none; }
 .slider {
-  position: absolute; top: 3px; left: 3px; width: 22px; height: 22px;
-  background: white; border-radius: 50%; transition: 0.2s;
+  position: absolute; top: 3px; left: 3px; width: 24px; height: 24px;
+  background: white; border-radius: 50%; transition: 0.3s;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
-input:checked +.slider { transform: translateX(22px); }
+input:checked +.slider { transform: translateX(24px); }
 input:checked ~.switch { background: var(--green); }
 
 .progress {
-  height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; margin-top: 6px;
+  height: 10px; background: var(--border); border-radius: 6px; overflow: hidden; margin-top: 8px;
 }
 .progress-bar {
-  height: 100%; background: var(--green); transition: width 0.3s;
+  height: 100%; background: var(--green); transition: width 0.5s ease;
+  border-radius: 6px;
 }
 .progress-bar.warn { background: var(--warn); }
 .progress-bar.danger { background: var(--danger); }
+
+.badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  background: rgba(16,185,129,0.15);
+  color: var(--green);
+}
+
+/* TOAST NOTIFICATION */
+.toast-container {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: calc(100% - 40px);
+  max-width: 400px;
+  pointer-events: none;
+}
+
+.toast {
+  background: var(--card);
+  color: var(--text);
+  padding: 14px 18px;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+  border-left: 4px solid var(--green);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  animation: slideDown 0.3s ease;
+  pointer-events: all;
+}
+
+.toast.hide {
+  animation: slideUp 0.3s ease forwards;
+}
+
+.toast.success { border-left-color: var(--green); }
+.toast.error { border-left-color: var(--red); }
+.toast.warn { border-left-color: var(--warn); }
+
+.toast-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.toast-content {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 500;
+}
 </style>
 </head>
 <body>
 
+<div class="toast-container" id="toastContainer"></div>
+
 <div id="authPage" class="container">
-  <div class="card">
-    <h2 style="margin-bottom:12px;">Catat Uang</h2>
+  <div class="card" style="text-align:center; padding:30px 20px;">
+    <h2 style="margin-bottom:8px;">💸 Catat Uang</h2>
+    <p style="color:var(--subtext); margin-bottom:20px;">Lacak keuanganmu dengan simpel</p>
     <input type="email" id="email" placeholder="Email">
     <input type="password" id="password" placeholder="Password">
-    <button class="btn green" id="btnLogin" style="width:100%; margin-top:8px;">Login</button>
-    <button class="btn outline" id="btnSignUp" style="width:100%; margin-top:8px;">Daftar</button>
+    <button class="btn green" id="btnLogin" style="width:100%; margin-top:10px;">Login</button>
+    <button class="btn outline" id="btnSignUp" style="width:100%; margin-top:10px;">Daftar</button>
+    <button class="btn outline" id="btnResend" style="width:100%; margin-top:8px; display:none;">
+      Kirim Ulang Verifikasi Email
+    </button>
   </div>
 </div>
 
 <div id="appPage" class="hidden">
   <div id="page-home" class="page active">
     <div class="container">
-      <div class="header">Catat Uang</div>
+      <div class="header-wrap">
+        <div>
+          <div class="greeting" id="greeting">Halo!</div>
+          <div class="header">Beranda</div>
+        </div>
+        <div class="date" id="todayDate"></div>
+      </div>
 
       <div class="card green">
-        <div>💰 Saldo Total</div>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div>💰 Saldo Total</div>
+          <div class="badge">Live</div>
+        </div>
         <h1 id="saldoTotal">¥0</h1>
         <div class="sub" id="subInfo">Kumulatif semua waktu • 0 transaksi</div>
+        <svg class="sparkline" id="sparkline" viewBox="0 0 100 40" preserveAspectRatio="none"></svg>
       </div>
 
       <div class="card">
-        <div style="font-weight:600; margin-bottom:8px;">$ Breakdown Keseluruhan</div>
+        <div style="font-weight:600; margin-bottom:10px; display:flex; justify-content:space-between;">
+          <span>$ Breakdown Keseluruhan</span>
+          <span style="font-size:12px; color:var(--subtext);">All time</span>
+        </div>
         <div class="row">
           <div class="label">📊 Saldo Awal</div>
           <div id="saldoAwal">¥0</div>
@@ -210,11 +312,11 @@ input:checked ~.switch { background: var(--green); }
       </div>
 
       <div class="card">
-        <div style="font-weight:600; margin-bottom:8px;">Budget Bulan Ini</div>
+        <div style="font-weight:600; margin-bottom:10px;">🎯 Budget Bulan Ini</div>
         <div id="budgetList">Belum ada budget</div>
       </div>
 
-      <div class="section-title">--- Hari Ini ---</div>
+      <div class="section-title">--- Aktivitas Hari Ini ---</div>
       <div class="grid2">
         <div class="mini-card green">
           <div class="label"><span class="icon">📈</span>Masuk</div>
@@ -226,23 +328,12 @@ input:checked ~.switch { background: var(--green); }
         </div>
       </div>
 
-      <div class="card" style="margin-top:12px;">
-        <div style="display:flex; justify-content:space-between;">
+      <div class="card" style="margin-top:14px;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
           <div>Transaksi Hari Ini</div>
-          <div id="countHariIni">0</div>
+          <div class="badge" id="countHariIni">0</div>
         </div>
       </div>
-
-      <form id="txForm" class="card">
-        <h4>Tambah Transaksi Cepat</h4>
-        <select id="type">
-          <option value="income">Pemasukan</option>
-          <option value="expense">Pengeluaran</option>
-        </select>
-        <input type="number" id="amount" placeholder="Jumlah">
-        <input type="text" id="desc" placeholder="Keterangan">
-        <button type="submit" class="btn green" id="btnAdd" style="width:100%;">Simpan</button>
-      </form>
     </div>
   </div>
 
@@ -263,13 +354,13 @@ input:checked ~.switch { background: var(--green); }
           <option value="JPY">Yen Jepang - ¥</option>
           <option value="IDR">Rupiah Indonesia - Rp</option>
         </select>
-        <button class="btn green" id="btnSaveCurrency" style="width:100%; margin-top:8px;">Simpan</button>
+        <button class="btn green" id="btnSaveCurrency" style="width:100%; margin-top:10px;">Simpan</button>
       </div>
 
       <div class="card">
         <h4>Budget Bulanan</h4>
         <input type="number" id="budgetAmount" placeholder="Set limit bulan ini">
-        <button class="btn green" id="btnSetBudget" style="width:100%; margin-top:8px;">Simpan Budget</button>
+        <button class="btn green" id="btnSetBudget" style="width:100%; margin-top:10px;">Simpan Budget</button>
       </div>
 
       <div class="card">
@@ -281,6 +372,9 @@ input:checked ~.switch { background: var(--green); }
             <span class="slider"></span>
           </label>
         </div>
+        <div style="font-size:12px; color:var(--subtext); margin-top:8px;">
+          Off = ikuti sistem HP
+        </div>
       </div>
 
       <div class="card">
@@ -289,6 +383,8 @@ input:checked ~.switch { background: var(--green); }
       </div>
     </div>
   </div>
+
+  <div class="fab" id="fabAdd">+</div>
 
   <div class="bottom-nav">
     <div class="nav-item active" data-page="home">
@@ -304,6 +400,22 @@ input:checked ~.switch { background: var(--green); }
       <div>Pengaturan</div>
     </div>
   </div>
+
+  <div id="modalAdd" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:200; display:flex; align-items:center; justify-content:center; padding:20px;">
+    <form id="txForm" class="card" style="width:100%; max-width:400px;">
+      <h4 style="margin-bottom:12px;">Tambah Transaksi</h4>
+      <select id="type">
+        <option value="income">Pemasukan</option>
+        <option value="expense">Pengeluaran</option>
+      </select>
+      <input type="number" id="amount" placeholder="Jumlah">
+      <input type="text" id="desc" placeholder="Keterangan">
+      <div style="display:flex; gap:10px; margin-top:10px;">
+        <button type="button" class="btn outline" id="btnCloseModal" style="flex:1;">Batal</button>
+        <button type="submit" class="btn green" id="btnAdd" style="flex:1;">Simpan</button>
+      </div>
+    </form>
+  </div>
 </div>
 
 <script>
@@ -314,15 +426,13 @@ if (!window.__appInit) {
   const SUPABASE_KEY = 'sb_publishable_nfxU1mTiDHhQgDG_1U6eTQ_-7ePLctc';
   const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+  const REDIRECT_URL = 'https://ctt-duit-tau.vercel.app';
+
   let currentUser = null;
   let isSaving = false;
   let allTransactions = [];
   let currency = localStorage.getItem('currency') || 'JPY';
-  let theme = localStorage.getItem('theme') || 'light';
-
-  document.documentElement.setAttribute('data-theme', theme);
-  document.getElementById('currencySelect').value = currency;
-  document.getElementById('themeToggle').checked = theme === 'dark';
+  let userThemePref = localStorage.getItem('theme');
 
   const formatters = {
     JPY: new Intl.NumberFormat('ja-JP', { style: 'currency', currency: 'JPY', maximumFractionDigits: 0 }),
@@ -331,20 +441,79 @@ if (!window.__appInit) {
   const formatMoney = (num) => formatters[currency].format(num || 0);
   const getMonth = () => new Date().toISOString().slice(0, 7);
 
+  const monthNames = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+  const today = new Date();
+  document.getElementById('todayDate').textContent = `${today.getDate()} ${monthNames[today.getMonth()]} ${today.getFullYear()}`;
+
   init();
 
   function init() {
+    applySystemTheme();
     checkUser();
     bindEvents();
+    setGreeting();
+
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+      if (!userThemePref) applySystemTheme();
+    });
+  }
+
+  function applySystemTheme() {
+    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const theme = userThemePref || (systemDark? 'dark' : 'light');
+    document.documentElement.setAttribute('data-theme', theme);
+    document.getElementById('themeToggle').checked = theme === 'dark';
+  }
+
+  function setGreeting() {
+    const hour = new Date().getHours();
+    let greet = 'Halo';
+    if (hour < 11) greet = 'Selamat Pagi';
+    else if (hour < 15) greet = 'Selamat Siang';
+    else if (hour < 18) greet = 'Selamat Sore';
+    else greet = 'Selamat Malam';
+    document.getElementById('greeting').textContent = greet;
+  }
+
+  function showToast(message, type = 'success', duration = 3000) {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+
+    const icons = {
+      success: '✓',
+      error: '✕',
+      warn: '⚠'
+    };
+
+    toast.innerHTML = `
+      <div class="toast-icon">${icons[type]}</div>
+      <div class="toast-content">${message}</div>
+    `;
+
+    container.appendChild(toast);
+
+    setTimeout(() => {
+      toast.classList.add('hide');
+      setTimeout(() => toast.remove(), 300);
+    }, duration);
   }
 
   function bindEvents() {
     document.getElementById('btnLogin').onclick = login;
     document.getElementById('btnSignUp').onclick = signup;
+    document.getElementById('btnResend').onclick = resendVerification;
     document.getElementById('btnLogout').onclick = logout;
     document.getElementById('btnSaveCurrency').onclick = saveCurrency;
     document.getElementById('themeToggle').onchange = toggleTheme;
     document.getElementById('btnSetBudget').onclick = setBudget;
+
+    document.getElementById('fabAdd').onclick = () => {
+      document.getElementById('modalAdd').classList.remove('hidden');
+    };
+    document.getElementById('btnCloseModal').onclick = () => {
+      document.getElementById('modalAdd').classList.add('hidden');
+    };
 
     const txForm = document.getElementById('txForm');
     txForm.removeEventListener('submit', addTransaction);
@@ -356,16 +525,22 @@ if (!window.__appInit) {
   }
 
   function toggleTheme() {
-    theme = document.getElementById('themeToggle').checked? 'dark' : 'light';
-    document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('theme', theme);
+    const checked = document.getElementById('themeToggle').checked;
+    if (checked) {
+      userThemePref = 'dark';
+      document.documentElement.setAttribute('data-theme', 'dark');
+    } else {
+      userThemePref = null;
+      applySystemTheme();
+    }
+    localStorage.setItem('theme', userThemePref || 'auto');
   }
 
   function saveCurrency() {
     currency = document.getElementById('currencySelect').value;
     localStorage.setItem('currency', currency);
     renderAll();
-    alert('Mata uang diubah ke ' + currency);
+    showToast('Mata uang diubah ke ' + currency, 'success');
   }
 
   function switchPage(page) {
@@ -377,9 +552,13 @@ if (!window.__appInit) {
   }
 
   async function checkUser() {
-    const { data } = await supabase.auth.getUser();
-    if (data.user) {
-      currentUser = data.user;
+    const { data: { user } = await supabase.auth.getUser();
+    if (user) {
+      if (!user.email_confirmed_at) {
+        await supabase.auth.signOut();
+        return;
+      }
+      currentUser = user;
       showApp();
       loadData();
     }
@@ -391,24 +570,62 @@ if (!window.__appInit) {
   }
 
   async function login() {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: document.getElementById('email').value,
-      password: document.getElementById('password').value
-    });
-    if (error) alert(error.message);
-    else {
-      currentUser = data.user;
-      showApp();
-      loadData();
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+    if (error) {
+      showToast(error.message, 'error');
+      return;
     }
+
+    if (!data.user.email_confirmed_at) {
+      await supabase.auth.signOut();
+      document.getElementById('btnResend').style.display = 'block';
+      showToast('Email belum diverifikasi. Cek inbox/spam.', 'warn');
+      return;
+    }
+
+    currentUser = data.user;
+    showApp();
+    loadData();
+    showToast('Login berhasil!', 'success');
   }
 
   async function signup() {
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+
     const { error } = await supabase.auth.signUp({
-      email: document.getElementById('email').value,
-      password: document.getElementById('password').value
+      email,
+      password,
+      options: {
+        emailRedirectTo: REDIRECT_URL
+      }
     });
-    alert(error? error.message : 'Daftar sukses! Silakan login.');
+
+    if (error) {
+      showToast(error.message, 'error');
+      return;
+    }
+
+    showToast('Daftar sukses! Cek email buat verifikasi.', 'success');
+    document.getElementById('btnResend').style.display = 'block';
+  }
+
+  async function resendVerification() {
+    const email = document.getElementById('email').value;
+    if (!email) {
+      showToast('Masukin email dulu', 'warn');
+      return;
+    }
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email,
+      options: { emailRedirectTo: REDIRECT_URL }
+    });
+    showToast(error? error.message : 'Email verifikasi dikirim ulang! Cek inbox/spam.', error? 'error' : 'success');
   }
 
   async function logout() {
@@ -416,6 +633,7 @@ if (!window.__appInit) {
     currentUser = null;
     document.getElementById('authPage').classList.remove('hidden');
     document.getElementById('appPage').classList.add('hidden');
+    showToast('Logout berhasil', 'success');
   }
 
   async function setBudget() {
@@ -425,20 +643,20 @@ if (!window.__appInit) {
     const end = `${month}-31T23:59:59.999Z`;
 
     if (!amount || amount <= 0) {
-      alert('Masukkan jumlah budget yang valid');
+      showToast('Masukkan jumlah budget yang valid', 'warn');
       return;
     }
 
     const { error: delErr } = await supabase
-  .from('transactions')
-  .delete()
-  .eq('user_id', currentUser.id)
-  .eq('type', 'budget')
-  .gte('created_at', start)
-  .lte('created_at', end);
+.from('transactions')
+.delete()
+.eq('user_id', currentUser.id)
+.eq('type', 'budget')
+.gte('created_at', start)
+.lte('created_at', end);
 
     if (delErr) {
-      alert('Gagal hapus budget lama: ' + delErr.message);
+      showToast('Gagal hapus budget lama: ' + delErr.message, 'error');
       return;
     }
 
@@ -451,23 +669,24 @@ if (!window.__appInit) {
       created_at: start
     }]);
 
-    if (error) alert('Gagal simpan budget: ' + error.message);
+    if (error) showToast('Gagal simpan budget: ' + error.message, 'error');
     else {
       document.getElementById('budgetAmount').value = '';
       await loadData();
-      alert('Budget bulan ' + month + ' disimpan!');
+      showToast(`Budget ${month} diset ke ${formatMoney(amount)}`, 'success');
     }
   }
 
   async function loadData() {
     const { data } = await supabase
-  .from('transactions')
-  .select('*')
-  .eq('user_id', currentUser.id)
-  .order('created_at', { ascending: false });
+.from('transactions')
+.select('*')
+.eq('user_id', currentUser.id)
+.order('created_at', { ascending: false });
 
     allTransactions = data || [];
     renderAll();
+    drawSparkline();
   }
 
   function renderAll() {
@@ -490,8 +709,8 @@ if (!window.__appInit) {
     });
 
     const spentThisMonth = allTransactions
-  .filter(t => t.type === 'expense' && t.created_at.startsWith(month))
-  .reduce((a, b) => a + b.amount, 0);
+.filter(t => t.type === 'expense' && t.created_at.startsWith(month))
+.reduce((a, b) => a + b.amount, 0);
 
     const percent = budget? Math.min(100, (spentThisMonth / budget) * 100) : 0;
     const barClass = percent > 80? 'danger' : percent > 60? 'warn' : '';
@@ -505,70 +724,58 @@ if (!window.__appInit) {
     document.getElementById('countHariIni').textContent = todayCount;
 
     document.getElementById('budgetList').innerHTML = budget > 0
-  ? `<div>Limit: ${formatMoney(budget)} | Terpakai: ${formatMoney(spentThisMonth)}</div>
+? `<div style="margin-bottom:6px;">Limit: ${formatMoney(budget)} | Terpakai: ${formatMoney(spentThisMonth)}</div>
          <div class="progress">
            <div class="progress-bar ${barClass}" style="width:${percent}%"></div>
        </div>`
       : '<div>Belum ada budget bulan ini</div>';
   }
 
+  function drawSparkline() {
+    const svg = document.getElementById('sparkline');
+    if (!svg) return;
+
+    const last7 = allTransactions
+   .filter(t => t.type!== 'budget')
+   .slice(0,7)
+   .reverse();
+
+    if (last7.length < 2) {
+      svg.innerHTML = '';
+      return;
+    }
+
+    const max = Math.max(...last7.map(t => t.amount));
+    const points = last7.map((t, i) => {
+      const x = (i / (last7.length - 1)) * 100;
+      const y = 40 - (t.amount / max) * 35;
+      return `${x},${y}`;
+    }).join(' ');
+
+    svg.innerHTML = `<polyline points="${points}" fill="none" stroke="rgba(255,255,255,0.8)" stroke-width="2"/>`;
+  }
+
   function renderTransactions() {
     let html = '';
     allTransactions
-  .filter(t => t.type!== 'budget')
-  .forEach(t => {
+.filter(t => t.type!== 'budget')
+.forEach(t => {
         const sign = t.type === 'income'? '+' : '-';
         const color = t.type === 'income'? 'green' : 'red';
+        const icon = t.type === 'income'? '📈' : '📉';
         html += `
-          <div class="card">
-            <div style="display:flex; justify-content:space-between;">
-              <div>
-                <div style="font-weight:600;">${t.desc || t.category || 'Tanpa keterangan'}</div>
-                <div style="font-size:12px; color:var(--subtext);">${new Date(t.created_at).toLocaleDateString('id-ID')}</div>
+          <div class="card" style="animation: fadeIn 0.3s ease;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <div style="display:flex; align-items:center; gap:10px;">
+                <div style="font-size:22px;">${icon}</div>
+                <div>
+                  <div style="font-weight:600;">${t.desc || t.category || 'Tanpa keterangan'}</div>
+                  <div style="font-size:12px; color:var(--subtext);">${new Date(t.created_at).toLocaleDateString('id-ID')}</div>
+                </div>
               </div>
               <div class="value ${color}">${sign} ${formatMoney(t.amount)}</div>
             </div>
           </div>
         `;
       });
-    document.getElementById('listTransaksi').innerHTML = html || '<div class="card">Belum ada transaksi</div>';
-  }
-
-  async function addTransaction(e) {
-    e.preventDefault();
-    if (isSaving) return;
-    isSaving = true;
-    document.getElementById('btnAdd').disabled = true;
-
-    const payload = {
-      user_id: currentUser.id,
-      type: document.getElementById('type').value,
-      amount: parseFloat(document.getElementById('amount').value) || 0,
-      desc: document.getElementById('desc').value,
-      category: 'Lainnya',
-      created_at: new Date().toISOString()
-    };
-
-    if (payload.amount <= 0) {
-      alert('Jumlah harus lebih dari 0');
-      isSaving = false;
-      document.getElementById('btnAdd').disabled = false;
-      return;
-    }
-
-    const { error } = await supabase.from('transactions').insert([payload]);
-    if (error) alert(error.message);
-    else {
-      document.getElementById('amount').value = '';
-      document.getElementById('desc').value = '';
-      await loadData();
-      switchPage('home');
-    }
-
-    isSaving = false;
-    document.getElementById('btnAdd').disabled = false;
-  }
-}
-</script>
-</body>
-</html>
+    document.getElementById('listTransaksi').innerHTML = html || '<div class="card" style="text-align:center; color:
