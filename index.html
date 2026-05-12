@@ -79,7 +79,7 @@ input, select { width: 100%; padding: 13px; margin: 8px 0; border-radius: 12px; 
 input:focus, select:focus { outline: none; border-color: var(--green); }
 input::placeholder { color: var(--subtext); }
 
-.hidden { display: none; }
+.hidden { display: none!important; }
 .section-title { font-size: 14px; color: var(--subtext); margin: 18px 0 10px; text-align: center; font-weight: 600; }
 .page { display: none; }
 .page.active { display: block; }
@@ -112,12 +112,8 @@ input:checked ~.switch { background: var(--green); }
 }
 .toast.error { border-left-color: var(--red); }
 .toast.warn { border-left-color: var(--warn); }
-@keyframes slideDown {
-  to { opacity: 1; transform: translateY(0); }
-}
-@keyframes slideUp {
-  to { opacity: 0; transform: translateY(-20px); }
-}
+@keyframes slideDown { to { opacity: 1; transform: translateY(0); } }
+@keyframes slideUp { to { opacity: 0; transform: translateY(-20px); } }
 .toast-icon { font-size: 20px; }
 .toast-close { margin-left: auto; cursor: pointer; opacity: 0.6; }
 .toast-close:hover { opacity: 1; }
@@ -140,6 +136,12 @@ input:checked ~.switch { background: var(--green); }
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 .loading-text { font-weight: 600; color: var(--text); }
+
+/* Modal */
+.modal-overlay {
+  position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:200;
+  align-items:center; justify-content:center; padding:20px;
+}
 </style>
 </head>
 <body>
@@ -290,8 +292,9 @@ input:checked ~.switch { background: var(--green); }
     </div>
   </div>
 
-  <div id="modalAdd" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:200; display:flex; align-items:center; justify-content:center; padding:20px;">
-    <form id="txForm" class="card" style="width:100%; max-width:400px;">
+  <!-- Modal Tambah Transaksi: FIXED, hidden by default -->
+  <div id="modalAdd" class="hidden modal-overlay">
+    <form id="txForm" class="card" style="width:100%; max-width:400px; margin:auto;">
       <h4 style="margin-bottom:12px;">Tambah Transaksi</h4>
       <select id="type">
         <option value="income">Pemasukan</option>
@@ -339,9 +342,26 @@ if (!window.__appInit) {
   init();
 
   function init() {
+    handleEmailConfirm();
     checkUser();
     bindEvents();
     setGreeting();
+  }
+
+  async function handleEmailConfirm() {
+    const hash = window.location.hash;
+    if (hash && hash.includes('access_token')) {
+      showLoading('Verifikasi email...');
+      const { error } = await supabase.auth.getSessionFromUrl({ storeSession: true });
+      hideLoading();
+      if (error) {
+        showToast('Link verifikasi gagal: ' + error.message, 'error');
+      } else {
+        showToast('Email berhasil diverifikasi! Silakan login', 'success');
+        window.location.hash = '';
+        checkUser();
+      }
+    }
   }
 
   function setGreeting() {
@@ -362,12 +382,8 @@ if (!window.__appInit) {
     document.getElementById('themeToggle').onchange = toggleTheme;
     document.getElementById('btnSetBudget').onclick = setBudget;
 
-    document.getElementById('fabAdd').onclick = () => {
-      document.getElementById('modalAdd').classList.remove('hidden');
-    };
-    document.getElementById('btnCloseModal').onclick = () => {
-      document.getElementById('modalAdd').classList.add('hidden');
-    };
+    document.getElementById('fabAdd').onclick = showModal;
+    document.getElementById('btnCloseModal').onclick = hideModal;
 
     document.getElementById('txForm').addEventListener('submit', addTransaction);
 
@@ -376,7 +392,18 @@ if (!window.__appInit) {
     });
   }
 
-  // Toast & Loading Functions
+  function showModal() {
+    const modal = document.getElementById('modalAdd');
+    modal.classList.remove('hidden');
+    modal.style.display = 'flex';
+  }
+
+  function hideModal() {
+    const modal = document.getElementById('modalAdd');
+    modal.classList.add('hidden');
+    modal.style.display = 'none';
+  }
+
   function showToast(message, type = 'success') {
     const container = document.getElementById('toastContainer');
     const icon = type === 'error'? '❌' : type === 'warn'? '⚠️' : '✅';
@@ -388,7 +415,6 @@ if (!window.__appInit) {
       <span class="toast-close">✕</span>
     `;
     container.appendChild(toast);
-
     toast.querySelector('.toast-close').onclick = () => removeToast(toast);
     setTimeout(() => removeToast(toast), 3000);
   }
@@ -463,7 +489,8 @@ if (!window.__appInit) {
     showLoading('Membuat akun...');
     const { error } = await supabase.auth.signUp({
       email: document.getElementById('email').value,
-      password: document.getElementById('password').value
+      password: document.getElementById('password').value,
+      options: { emailRedirectTo: window.location.origin }
     });
     hideLoading();
     if (error) showToast(error.message, 'error');
@@ -493,12 +520,12 @@ if (!window.__appInit) {
 
     showLoading('Menyimpan budget...');
     const { error: delErr } = await supabase
-    .from('transactions')
-    .delete()
-    .eq('user_id', currentUser.id)
-    .eq('type', 'budget')
-    .gte('created_at', start)
-    .lte('created_at', end);
+   .from('transactions')
+   .delete()
+   .eq('user_id', currentUser.id)
+   .eq('type', 'budget')
+   .gte('created_at', start)
+   .lte('created_at', end);
 
     if (delErr) {
       hideLoading();
@@ -526,10 +553,10 @@ if (!window.__appInit) {
 
   async function loadData() {
     const { data } = await supabase
-    .from('transactions')
-    .select('*')
-    .eq('user_id', currentUser.id)
-    .order('created_at', { ascending: false });
+   .from('transactions')
+   .select('*')
+   .eq('user_id', currentUser.id)
+   .order('created_at', { ascending: false });
 
     allTransactions = data || [];
     renderAll();
@@ -556,8 +583,8 @@ if (!window.__appInit) {
     });
 
     const spentThisMonth = allTransactions
-    .filter(t => t.type === 'expense' && t.created_at.startsWith(month))
-    .reduce((a, b) => a + b.amount, 0);
+   .filter(t => t.type === 'expense' && t.created_at.startsWith(month))
+   .reduce((a, b) => a + b.amount, 0);
 
     const percent = budget? Math.min(100, (spentThisMonth / budget) * 100) : 0;
     const barClass = percent > 80? 'danger' : percent > 60? 'warn' : '';
@@ -571,7 +598,7 @@ if (!window.__appInit) {
     document.getElementById('countHariIni').textContent = todayCount;
 
     document.getElementById('budgetList').innerHTML = budget > 0
-    ? `<div style="margin-bottom:6px;">Limit: ${formatMoney(budget)} | Terpakai: ${formatMoney(spentThisMonth)}</div>
+   ? `<div style="margin-bottom:6px;">Limit: ${formatMoney(budget)} | Terpakai: ${formatMoney(spentThisMonth)}</div>
          <div class="progress">
            <div class="progress-bar ${barClass}" style="width:${percent}%"></div>
          </div>`
@@ -583,9 +610,9 @@ if (!window.__appInit) {
     if (!svg) return;
 
     const last7 = allTransactions
-    .filter(t => t.type!== 'budget')
-    .slice(0,7)
-    .reverse();
+   .filter(t => t.type!== 'budget')
+   .slice(0,7)
+   .reverse();
 
     if (last7.length < 2) {
       svg.innerHTML = '';
@@ -605,26 +632,26 @@ if (!window.__appInit) {
   function renderTransactions() {
     let html = '';
     allTransactions
-    .filter(t => t.type!== 'budget')
-    .forEach(t => {
-        const sign = t.type === 'income'? '+' : '-';
-        const color = t.type === 'income'? 'green' : 'red';
-        const icon = t.type === 'income'? '📈' : '📉';
-        html += `
-          <div class="card" style="animation: fadeIn 0.3s ease;">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-              <div style="display:flex; align-items:center; gap:10px;">
-                <div style="font-size:22px;">${icon}</div>
-                <div>
-                  <div style="font-weight:600;">${t.desc || t.category || 'Tanpa keterangan'}</div>
-                  <div style="font-size:12px; color:var(--subtext);">${new Date(t.created_at).toLocaleDateString('id-ID')}</div>
-                </div>
+   .filter(t => t.type!== 'budget')
+   .forEach(t => {
+      const sign = t.type === 'income'? '+' : '-';
+      const color = t.type === 'income'? 'green' : 'red';
+      const icon = t.type === 'income'? '📈' : '📉';
+      html += `
+        <div class="card" style="animation: fadeIn 0.3s ease;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <div style="font-size:22px;">${icon}</div>
+              <div>
+                <div style="font-weight:600;">${t.desc || t.category || 'Tanpa keterangan'}</div>
+                <div style="font-size:12px; color:var(--subtext);">${new Date(t.created_at).toLocaleDateString('id-ID')}</div>
               </div>
-              <div class="value ${color}">${sign} ${formatMoney(t.amount)}</div>
             </div>
+            <div class="value ${color}">${sign} ${formatMoney(t.amount)}</div>
           </div>
-        `;
-      });
+        </div>
+      `;
+    });
     document.getElementById('listTransaksi').innerHTML = html || '<div class="card" style="text-align:center; color:var(--subtext);">Belum ada transaksi</div>';
   }
 
@@ -658,7 +685,7 @@ if (!window.__appInit) {
     else {
       document.getElementById('amount').value = '';
       document.getElementById('desc').value = '';
-      document.getElementById('modalAdd').classList.add('hidden');
+      hideModal();
       await loadData();
       switchPage('home');
       showToast('Transaksi berhasil ditambahkan!', 'success');
