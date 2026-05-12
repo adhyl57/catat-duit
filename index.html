@@ -27,8 +27,6 @@
 body { background: var(--bg); color: var(--text); padding-bottom: 90px; transition: 0.3s; }
 .container { max-width: 500px; margin: 0 auto; padding: 16px; animation: fadeIn 0.4s ease; }
 @keyframes fadeIn { from {opacity:0; transform: translateY(10px);} to {opacity:1; transform: translateY(0);} }
-@keyframes slideDown { from {opacity:0; transform: translateY(-20px);} to {opacity:1; transform: translateY(0);} }
-@keyframes slideUp { from {opacity:1; transform: translateY(0);} to {opacity:0; transform: translateY(-20px);} }
 
 .header-wrap {
   display: flex; justify-content: space-between; align-items: center;
@@ -203,59 +201,9 @@ input:checked ~.switch { background: var(--green); }
   background: rgba(16,185,129,0.15);
   color: var(--green);
 }
-
-/* TOAST NOTIFICATION */
-.toast-container {
-  position: fixed;
-  top: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 9999;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  width: calc(100% - 40px);
-  max-width: 400px;
-  pointer-events: none;
-}
-
-.toast {
-  background: var(--card);
-  color: var(--text);
-  padding: 14px 18px;
-  border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-  border-left: 4px solid var(--green);
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  animation: slideDown 0.3s ease;
-  pointer-events: all;
-}
-
-.toast.hide {
-  animation: slideUp 0.3s ease forwards;
-}
-
-.toast.success { border-left-color: var(--green); }
-.toast.error { border-left-color: var(--red); }
-.toast.warn { border-left-color: var(--warn); }
-
-.toast-icon {
-  font-size: 20px;
-  flex-shrink: 0;
-}
-
-.toast-content {
-  flex: 1;
-  font-size: 14px;
-  font-weight: 500;
-}
 </style>
 </head>
 <body>
-
-<div class="toast-container" id="toastContainer"></div>
 
 <div id="authPage" class="container">
   <div class="card" style="text-align:center; padding:30px 20px;">
@@ -265,9 +213,6 @@ input:checked ~.switch { background: var(--green); }
     <input type="password" id="password" placeholder="Password">
     <button class="btn green" id="btnLogin" style="width:100%; margin-top:10px;">Login</button>
     <button class="btn outline" id="btnSignUp" style="width:100%; margin-top:10px;">Daftar</button>
-    <button class="btn outline" id="btnResend" style="width:100%; margin-top:8px; display:none;">
-      Kirim Ulang Verifikasi Email
-    </button>
   </div>
 </div>
 
@@ -372,9 +317,6 @@ input:checked ~.switch { background: var(--green); }
             <span class="slider"></span>
           </label>
         </div>
-        <div style="font-size:12px; color:var(--subtext); margin-top:8px;">
-          Off = ikuti sistem HP
-        </div>
       </div>
 
       <div class="card">
@@ -384,6 +326,7 @@ input:checked ~.switch { background: var(--green); }
     </div>
   </div>
 
+  <!-- Floating Action Button -->
   <div class="fab" id="fabAdd">+</div>
 
   <div class="bottom-nav">
@@ -401,6 +344,7 @@ input:checked ~.switch { background: var(--green); }
     </div>
   </div>
 
+  <!-- Modal Tambah Transaksi -->
   <div id="modalAdd" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:200; display:flex; align-items:center; justify-content:center; padding:20px;">
     <form id="txForm" class="card" style="width:100%; max-width:400px;">
       <h4 style="margin-bottom:12px;">Tambah Transaksi</h4>
@@ -426,13 +370,15 @@ if (!window.__appInit) {
   const SUPABASE_KEY = 'sb_publishable_nfxU1mTiDHhQgDG_1U6eTQ_-7ePLctc';
   const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  const REDIRECT_URL = 'https://ctt-duit-tau.vercel.app';
-
   let currentUser = null;
   let isSaving = false;
   let allTransactions = [];
   let currency = localStorage.getItem('currency') || 'JPY';
-  let userThemePref = localStorage.getItem('theme');
+  let theme = localStorage.getItem('theme') || 'light';
+
+  document.documentElement.setAttribute('data-theme', theme);
+  document.getElementById('currencySelect').value = currency;
+  document.getElementById('themeToggle').checked = theme === 'dark';
 
   const formatters = {
     JPY: new Intl.NumberFormat('ja-JP', { style: 'currency', currency: 'JPY', maximumFractionDigits: 0 }),
@@ -448,21 +394,9 @@ if (!window.__appInit) {
   init();
 
   function init() {
-    applySystemTheme();
     checkUser();
     bindEvents();
     setGreeting();
-
-    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
-      if (!userThemePref) applySystemTheme();
-    });
-  }
-
-  function applySystemTheme() {
-    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const theme = userThemePref || (systemDark? 'dark' : 'light');
-    document.documentElement.setAttribute('data-theme', theme);
-    document.getElementById('themeToggle').checked = theme === 'dark';
   }
 
   function setGreeting() {
@@ -475,34 +409,9 @@ if (!window.__appInit) {
     document.getElementById('greeting').textContent = greet;
   }
 
-  function showToast(message, type = 'success', duration = 3000) {
-    const container = document.getElementById('toastContainer');
-    const toast = document.createElement('div');
-    toast.className = `toast ${type}`;
-
-    const icons = {
-      success: '✓',
-      error: '✕',
-      warn: '⚠'
-    };
-
-    toast.innerHTML = `
-      <div class="toast-icon">${icons[type]}</div>
-      <div class="toast-content">${message}</div>
-    `;
-
-    container.appendChild(toast);
-
-    setTimeout(() => {
-      toast.classList.add('hide');
-      setTimeout(() => toast.remove(), 300);
-    }, duration);
-  }
-
   function bindEvents() {
     document.getElementById('btnLogin').onclick = login;
     document.getElementById('btnSignUp').onclick = signup;
-    document.getElementById('btnResend').onclick = resendVerification;
     document.getElementById('btnLogout').onclick = logout;
     document.getElementById('btnSaveCurrency').onclick = saveCurrency;
     document.getElementById('themeToggle').onchange = toggleTheme;
@@ -525,22 +434,16 @@ if (!window.__appInit) {
   }
 
   function toggleTheme() {
-    const checked = document.getElementById('themeToggle').checked;
-    if (checked) {
-      userThemePref = 'dark';
-      document.documentElement.setAttribute('data-theme', 'dark');
-    } else {
-      userThemePref = null;
-      applySystemTheme();
-    }
-    localStorage.setItem('theme', userThemePref || 'auto');
+    theme = document.getElementById('themeToggle').checked? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
   }
 
   function saveCurrency() {
     currency = document.getElementById('currencySelect').value;
     localStorage.setItem('currency', currency);
     renderAll();
-    showToast('Mata uang diubah ke ' + currency, 'success');
+    alert('Mata uang diubah ke ' + currency);
   }
 
   function switchPage(page) {
@@ -552,13 +455,9 @@ if (!window.__appInit) {
   }
 
   async function checkUser() {
-    const { data: { user } } await supabase.auth.getUser();
-    if (user) {
-      if (!user.email_confirmed_at) {
-        await supabase.auth.signOut();
-        return;
-      }
-      currentUser = user;
+    const { data } = await supabase.auth.getUser();
+    if (data.user) {
+      currentUser = data.user;
       showApp();
       loadData();
     }
@@ -570,62 +469,24 @@ if (!window.__appInit) {
   }
 
   async function login() {
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
-
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-
-    if (error) {
-      showToast(error.message, 'error');
-      return;
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: document.getElementById('email').value,
+      password: document.getElementById('password').value
+    });
+    if (error) alert(error.message);
+    else {
+      currentUser = data.user;
+      showApp();
+      loadData();
     }
-
-    if (!data.user.email_confirmed_at) {
-      await supabase.auth.signOut();
-      document.getElementById('btnResend').style.display = 'block';
-      showToast('Email belum diverifikasi. Cek inbox/spam.', 'warn');
-      return;
-    }
-
-    currentUser = data.user;
-    showApp();
-    loadData();
-    showToast('Login berhasil!', 'success');
   }
 
   async function signup() {
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
-
     const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: REDIRECT_URL
-      }
+      email: document.getElementById('email').value,
+      password: document.getElementById('password').value
     });
-
-    if (error) {
-      showToast(error.message, 'error');
-      return;
-    }
-
-    showToast('Daftar sukses! Cek email buat verifikasi.', 'success');
-    document.getElementById('btnResend').style.display = 'block';
-  }
-
-  async function resendVerification() {
-    const email = document.getElementById('email').value;
-    if (!email) {
-      showToast('Masukin email dulu', 'warn');
-      return;
-    }
-    const { error } = await supabase.auth.resend({
-      type: 'signup',
-      email,
-      options: { emailRedirectTo: REDIRECT_URL }
-    });
-    showToast(error? error.message : 'Email verifikasi dikirim ulang! Cek inbox/spam.', error? 'error' : 'success');
+    alert(error? error.message : 'Daftar sukses! Silakan login.');
   }
 
   async function logout() {
@@ -633,7 +494,6 @@ if (!window.__appInit) {
     currentUser = null;
     document.getElementById('authPage').classList.remove('hidden');
     document.getElementById('appPage').classList.add('hidden');
-    showToast('Logout berhasil', 'success');
   }
 
   async function setBudget() {
@@ -643,20 +503,20 @@ if (!window.__appInit) {
     const end = `${month}-31T23:59:59.999Z`;
 
     if (!amount || amount <= 0) {
-      showToast('Masukkan jumlah budget yang valid', 'warn');
+      alert('Masukkan jumlah budget yang valid');
       return;
     }
 
     const { error: delErr } = await supabase
-.from('transactions')
-.delete()
-.eq('user_id', currentUser.id)
-.eq('type', 'budget')
-.gte('created_at', start)
-.lte('created_at', end);
+  .from('transactions')
+  .delete()
+  .eq('user_id', currentUser.id)
+  .eq('type', 'budget')
+  .gte('created_at', start)
+  .lte('created_at', end);
 
     if (delErr) {
-      showToast('Gagal hapus budget lama: ' + delErr.message, 'error');
+      alert('Gagal hapus budget lama: ' + delErr.message);
       return;
     }
 
@@ -669,20 +529,20 @@ if (!window.__appInit) {
       created_at: start
     }]);
 
-    if (error) showToast('Gagal simpan budget: ' + error.message, 'error');
+    if (error) alert('Gagal simpan budget: ' + error.message);
     else {
       document.getElementById('budgetAmount').value = '';
       await loadData();
-      showToast(`Budget ${month} diset ke ${formatMoney(amount)}`, 'success');
+      alert('Budget bulan ' + month + ' disimpan!');
     }
   }
 
   async function loadData() {
     const { data } = await supabase
-.from('transactions')
-.select('*')
-.eq('user_id', currentUser.id)
-.order('created_at', { ascending: false });
+  .from('transactions')
+  .select('*')
+  .eq('user_id', currentUser.id)
+  .order('created_at', { ascending: false });
 
     allTransactions = data || [];
     renderAll();
@@ -709,8 +569,8 @@ if (!window.__appInit) {
     });
 
     const spentThisMonth = allTransactions
-.filter(t => t.type === 'expense' && t.created_at.startsWith(month))
-.reduce((a, b) => a + b.amount, 0);
+  .filter(t => t.type === 'expense' && t.created_at.startsWith(month))
+  .reduce((a, b) => a + b.amount, 0);
 
     const percent = budget? Math.min(100, (spentThisMonth / budget) * 100) : 0;
     const barClass = percent > 80? 'danger' : percent > 60? 'warn' : '';
@@ -724,7 +584,7 @@ if (!window.__appInit) {
     document.getElementById('countHariIni').textContent = todayCount;
 
     document.getElementById('budgetList').innerHTML = budget > 0
-? `<div style="margin-bottom:6px;">Limit: ${formatMoney(budget)} | Terpakai: ${formatMoney(spentThisMonth)}</div>
+  ? `<div style="margin-bottom:6px;">Limit: ${formatMoney(budget)} | Terpakai: ${formatMoney(spentThisMonth)}</div>
          <div class="progress">
            <div class="progress-bar ${barClass}" style="width:${percent}%"></div>
        </div>`
@@ -736,9 +596,9 @@ if (!window.__appInit) {
     if (!svg) return;
 
     const last7 = allTransactions
-   .filter(t => t.type!== 'budget')
-   .slice(0,7)
-   .reverse();
+     .filter(t => t.type!== 'budget')
+     .slice(0,7)
+     .reverse();
 
     if (last7.length < 2) {
       svg.innerHTML = '';
@@ -758,8 +618,8 @@ if (!window.__appInit) {
   function renderTransactions() {
     let html = '';
     allTransactions
-.filter(t => t.type!== 'budget')
-.forEach(t => {
+  .filter(t => t.type!== 'budget')
+  .forEach(t => {
         const sign = t.type === 'income'? '+' : '-';
         const color = t.type === 'income'? 'green' : 'red';
         const icon = t.type === 'income'? '📈' : '📉';
@@ -778,4 +638,45 @@ if (!window.__appInit) {
           </div>
         `;
       });
-    document.getElementById('listTransaksi').innerHTML = html || '<div class="card" style="text-align:center; color:
+    document.getElementById('listTransaksi').innerHTML = html || '<div class="card" style="text-align:center; color:var(--subtext);">Belum ada transaksi</div>';
+  }
+
+  async function addTransaction(e) {
+    e.preventDefault();
+    if (isSaving) return;
+    isSaving = true;
+    document.getElementById('btnAdd').disabled = true;
+
+    const payload = {
+      user_id: currentUser.id,
+      type: document.getElementById('type').value,
+      amount: parseFloat(document.getElementById('amount').value) || 0,
+      desc: document.getElementById('desc').value,
+      category: 'Lainnya',
+      created_at: new Date().toISOString()
+    };
+
+    if (payload.amount <= 0) {
+      alert('Jumlah harus lebih dari 0');
+      isSaving = false;
+      document.getElementById('btnAdd').disabled = false;
+      return;
+    }
+
+    const { error } = await supabase.from('transactions').insert([payload]);
+    if (error) alert(error.message);
+    else {
+      document.getElementById('amount').value = '';
+      document.getElementById('desc').value = '';
+      document.getElementById('modalAdd').classList.add('hidden');
+      await loadData();
+      switchPage('home');
+    }
+
+    isSaving = false;
+    document.getElementById('btnAdd').disabled = false;
+  }
+}
+</script>
+</body>
+</html>
