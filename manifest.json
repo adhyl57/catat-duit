@@ -1,26 +1,102 @@
 {
-  "name": "Catat Duit",
-  "short_name": "CatatDuit",
-  "description": "Aplikasi pencatat keuangan pribadi",
-  "start_url": "/",
-  "scope": "/",
+  "name": "Catat Uang - Lacak Keuangan Simpel",
+  "short_name": "Catat Uang",
+  "description": "Aplikasi mobile untuk mencatat pengeluaran dan pemasukan dengan sederhana",
+  "start_url": "/index.html",
+  "scope": "./",
   "display": "standalone",
   "orientation": "portrait-primary",
-  "background_color": "#0f172a",
-  "theme_color": "#0f172a",
-  "lang": "id",
-  "icons": [
+  "background_color": "#ffffff",
+  "theme_color": "#10b981",
+  "start_url": "/",
+  "categories": ["finance", "productivity"],
+  "screenshots": [
     {
-      "src": "/icon-192.png",
-      "sizes": "192x192",
+      "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
+      "sizes": "540x720",
       "type": "image/png",
-      "purpose": "any maskable"
+      "form_factor": "narrow"
     },
     {
-      "src": "/icon-512.png",
-      "sizes": "512x512", 
+      "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
+      "sizes": "1280x720",
       "type": "image/png",
-      "purpose": "any maskable"
+      "form_factor": "wide"
     }
-  ]
+  ],
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%2310b981' width='192' height='192'/><text x='96' y='120' font-size='120' fill='%23fff' text-anchor='middle'>💸</text></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%2310b981' width='192' height='192'/><text x='96' y='120' font-size='120' fill='%23fff' text-anchor='middle'>💸</text></svg>",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%2310b981' width='192' height='192'/><text x='96' y='120' font-size='120' fill='%23fff' text-anchor='middle'>💸</text></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Tambah Transaksi",
+      "short_name": "Tambah",
+      "description": "Cepat tambah transaksi baru",
+      "url": "/?page=transaksi",
+      "icons": [
+        {
+          "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'><rect fill='%2310b981' width='96' height='96'/><text x='48' y='70' font-size='60' fill='%23fff' text-anchor='middle'>➕</text></svg>",
+          "sizes": "96x96",
+          "type": "image/svg+xml"
+        }
+      ]
+    },
+    {
+      "name": "Lihat Laporan",
+      "short_name": "Laporan",
+      "description": "Lihat laporan keuangan",
+      "url": "/?page=transaksi",
+      "icons": [
+        {
+          "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'><rect fill='%2310b981' width='96' height='96'/><text x='48' y='70' font-size='60' fill='%23fff' text-anchor='middle'>📊</text></svg>",
+          "sizes": "96x96",
+          "type": "image/svg+xml"
+        }
+      ]
+    }
+  ],
+  "share_target": {
+    "action": "/share",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  },
+  "file_handlers": [
+    {
+      "action": "/open-csv",
+      "accept": {
+        "text/csv": [".csv"]
+      },
+      "icons": [
+        {
+          "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'><rect fill='%2310b981' width='256' height='256'/><text x='128' y='180' font-size='120' fill='%23fff' text-anchor='middle'>📄</text></svg>",
+          "sizes": "256x256",
+          "type": "image/svg+xml"
+        }
+      ]
+    }
+  ],
+  "prefer_related_applications": false,
+  "related_applications": []
 }
