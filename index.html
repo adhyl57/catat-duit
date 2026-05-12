@@ -5,7 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Catat Uang – Neumorphism</title>
 
-<!-- Library -->
+<!-- Library Eksternal -->
+<script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+<script>eruda.init();</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -38,7 +40,6 @@
   --shadow-btn-hover: 2px 2px 4px #111118, -2px -2px 4px #2b2b42;
 }
 
-/* ========== GLOBAL ========== */
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
   background: var(--bg);
@@ -61,12 +62,7 @@ body {
   transition: box-shadow 0.3s, transform 0.2s;
 }
 
-/* Typography */
-h1, h2, h3 { font-weight: 600; }
-.header-wrap {
-  display: flex; justify-content: space-between; align-items: center;
-  margin-bottom: 16px;
-}
+.header-wrap { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
 .greeting { font-size: 14px; color: var(--subtext); }
 .date { font-size: 13px; color: var(--subtext); }
 
@@ -88,19 +84,14 @@ h1, h2, h3 { font-weight: 600; }
 [data-theme="dark"] .btn.primary {
   box-shadow: 4px 4px 8px #111118, -4px -4px 8px #2b2b42;
 }
-.btn.outline {
-  background: transparent;
-  box-shadow: var(--shadow-1);
-}
+.btn.outline { background: transparent; box-shadow: var(--shadow-1); }
 
 .fab {
   position: fixed; bottom: 110px; right: 24px;
   width: 60px; height: 60px; border-radius: 30px;
-  background: var(--card-bg);
-  box-shadow: var(--shadow-btn);
+  background: var(--card-bg); box-shadow: var(--shadow-btn);
   display: flex; align-items: center; justify-content: center;
-  font-size: 28px; color: var(--green);
-  cursor: pointer; z-index: 100; transition: all 0.2s;
+  font-size: 28px; color: var(--green); cursor: pointer; z-index: 100; transition: all 0.2s;
 }
 .fab:active { box-shadow: var(--shadow-inset); }
 
@@ -108,16 +99,10 @@ h1, h2, h3 { font-weight: 600; }
 input, select, textarea {
   width: 100%; padding: 14px 18px; margin: 10px 0;
   border: none; border-radius: 12px;
-  background: var(--card-bg);
-  box-shadow: var(--shadow-inset);
-  color: var(--text);
-  font-size: 15px;
-  outline: none;
-  transition: box-shadow 0.2s;
+  background: var(--card-bg); box-shadow: var(--shadow-inset);
+  color: var(--text); font-size: 15px; outline: none; transition: box-shadow 0.2s;
 }
-input:focus, select:focus, textarea:focus {
-  box-shadow: 0 0 0 2px var(--green);
-}
+input:focus, select:focus, textarea:focus { box-shadow: 0 0 0 2px var(--green); }
 ::placeholder { color: var(--subtext); opacity: 0.7; }
 
 /* ========== TOAST NEUMORPHISM ========== */
@@ -127,16 +112,12 @@ input:focus, select:focus, textarea:focus {
   width: calc(100% - 40px); max-width: 400px; pointer-events: none;
 }
 .toast {
-  background: var(--card-bg);
-  box-shadow: var(--shadow-1);
-  border-radius: 16px;
-  padding: 16px 20px;
+  background: var(--card-bg); box-shadow: var(--shadow-1);
+  border-radius: 16px; padding: 16px 20px;
   display: flex; align-items: center; gap: 10px;
-  opacity: 0;
-  transform: translateY(-30px);
+  opacity: 0; transform: translateY(-30px);
   animation: slideDown 0.35s cubic-bezier(0.21, 1.02, 0.73, 1) forwards;
-  pointer-events: auto;
-  color: var(--text);
+  pointer-events: auto; color: var(--text);
 }
 .toast.success { border-left: 5px solid var(--green); }
 .toast.error { border-left: 5px solid var(--red); }
@@ -151,26 +132,18 @@ input:focus, select:focus, textarea:focus {
 .bottom-nav {
   position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
   width: calc(100% - 40px); max-width: 400px;
-  background: var(--card-bg);
-  box-shadow: var(--shadow-1);
-  border-radius: 24px;
-  display: flex; justify-content: space-around;
-  padding: 12px 10px;
-  backdrop-filter: blur(0px);
-  z-index: 90;
+  background: var(--card-bg); box-shadow: var(--shadow-1);
+  border-radius: 24px; display: flex; justify-content: space-around;
+  padding: 12px 10px; backdrop-filter: blur(0px); z-index: 90;
 }
 .nav-item {
   display: flex; flex-direction: column; align-items: center;
-  font-size: 12px; color: var(--subtext);
-  padding: 8px 16px; border-radius: 18px;
+  font-size: 12px; color: var(--subtext); padding: 8px 16px; border-radius: 18px;
   transition: all 0.2s; cursor: pointer;
 }
 .nav-item.active {
-  background: var(--card-bg);
-  box-shadow: var(--shadow-inset);
-  color: var(--green);
-  font-weight: 600;
-  transform: scale(0.95);
+  background: var(--card-bg); box-shadow: var(--shadow-inset);
+  color: var(--green); font-weight: 600; transform: scale(0.95);
 }
 .nav-item svg { width: 24px; height: 24px; margin-bottom: 2px; }
 
@@ -181,10 +154,8 @@ input:focus, select:focus, textarea:focus {
   padding: 20px;
 }
 .modal-card {
-  background: var(--card-bg);
-  box-shadow: var(--shadow-1);
-  border-radius: 24px; width: 100%; max-width: 400px;
-  padding: 24px;
+  background: var(--card-bg); box-shadow: var(--shadow-1);
+  border-radius: 24px; width: 100%; max-width: 400px; padding: 24px;
 }
 
 /* ========== MISC ========== */
@@ -194,36 +165,23 @@ input:focus, select:focus, textarea:focus {
 .row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; }
 .separator { width: 100%; height: 1px; background: var(--subtext); opacity: 0.2; margin: 12px 0; }
 .mini-card {
-  background: var(--card-bg);
-  border-radius: 16px;
-  padding: 14px;
-  box-shadow: var(--shadow-1);
+  background: var(--card-bg); border-radius: 16px; padding: 14px; box-shadow: var(--shadow-1);
 }
 .progress {
-  height: 8px;
-  background: var(--card-bg);
-  box-shadow: var(--shadow-inset);
-  border-radius: 4px;
-  overflow: hidden;
-  margin-top: 6px;
+  height: 8px; background: var(--card-bg); box-shadow: var(--shadow-inset);
+  border-radius: 4px; overflow: hidden; margin-top: 6px;
 }
-.progress-bar {
-  height: 100%; background: var(--green); transition: width 0.5s;
-  border-radius: 4px;
-}
+.progress-bar { height: 100%; background: var(--green); transition: width 0.5s; border-radius: 4px; }
 .progress-bar.warn { background: var(--warn); }
 .progress-bar.danger { background: var(--red); }
 
 .transaction-item { position: relative; }
-.transaction-actions {
-  display: flex; gap: 16px;
-}
+.transaction-actions { display: flex; gap: 16px; }
 .transaction-actions span {
   cursor: pointer; font-size: 20px; opacity: 0.7; transition: 0.2s;
 }
 .transaction-actions span:hover { opacity: 1; transform: scale(1.15); }
 
-/* Sparkline (untuk card saldo) */
 .sparkline { width: 100%; height: 45px; margin-top: 8px; opacity: 0.8; }
 
 /* Loading */
@@ -236,8 +194,7 @@ input:focus, select:focus, textarea:focus {
 .spinner {
   width: 50px; height: 50px; border: 5px solid var(--card-bg);
   border-top-color: var(--green); border-radius: 50%;
-  animation: spin 1s linear infinite;
-  box-shadow: var(--shadow-1);
+  animation: spin 1s linear infinite; box-shadow: var(--shadow-1);
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 .loading-text { margin-top: 15px; color: white; font-weight: 600; }
@@ -246,20 +203,16 @@ input:focus, select:focus, textarea:focus {
 .switch-wrap { display: flex; align-items: center; gap: 10px; }
 .switch {
   position: relative; width: 52px; height: 28px;
-  background: var(--card-bg);
-  box-shadow: var(--shadow-inset);
+  background: var(--card-bg); box-shadow: var(--shadow-inset);
   border-radius: 14px; cursor: pointer; transition: 0.2s;
 }
 .switch input { display: none; }
 .slider {
   position: absolute; top: 2px; left: 2px;
   width: 24px; height: 24px; background: white;
-  border-radius: 50%; transition: 0.2s;
-  box-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+  border-radius: 50%; transition: 0.2s; box-shadow: 2px 2px 4px rgba(0,0,0,0.2);
 }
 input:checked + .slider { transform: translateX(24px); background: var(--green); }
-
-/* Category select dinamis */
 </style>
 </head>
 <body>
@@ -291,14 +244,10 @@ input:checked + .slider { transform: translateX(24px); background: var(--green);
   <div id="page-home" class="page active">
     <div class="container">
       <div class="header-wrap">
-        <div>
-          <div class="greeting" id="greeting">Halo!</div>
-          <h2>Beranda</h2>
-        </div>
+        <div><div class="greeting" id="greeting">Halo!</div><h2>Beranda</h2></div>
         <div class="date" id="todayDate"></div>
       </div>
 
-      <!-- Saldo Card -->
       <div class="neu-card" style="background: linear-gradient(145deg, #10b981, #059669); color: white;">
         <div style="display:flex; justify-content:space-between;">
           <span>💰 Saldo Total</span>
@@ -309,7 +258,6 @@ input:checked + .slider { transform: translateX(24px); background: var(--green);
         <svg class="sparkline" id="sparkline" viewBox="0 0 100 40" preserveAspectRatio="none"></svg>
       </div>
 
-      <!-- Breakdown -->
       <div class="neu-card">
         <h3 style="margin-bottom:10px;">📊 Breakdown</h3>
         <div class="row"><span>📌 Saldo Awal</span><span id="saldoAwal">¥0</span></div>
@@ -319,13 +267,11 @@ input:checked + .slider { transform: translateX(24px); background: var(--green);
         <div class="row"><span>📉 Total Pengeluaran</span><span class="value red" id="totalKeluar">-¥0</span></div>
       </div>
 
-      <!-- Budget -->
       <div class="neu-card">
         <h3 style="margin-bottom:8px;">🎯 Budget Bulan Ini</h3>
         <div id="budgetList">Belum ada budget</div>
       </div>
 
-      <!-- Hari ini -->
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:10px;">
         <div class="mini-card" style="border-left:4px solid var(--green);">
           <div style="font-size:13px; color:var(--subtext);">📈 Masuk Hari Ini</div>
@@ -359,7 +305,7 @@ input:checked + .slider { transform: translateX(24px); background: var(--green);
   <div id="page-pengaturan" class="page">
     <div class="container">
       <h2 style="margin-bottom:12px;">Pengaturan</h2>
-      
+
       <div class="neu-card">
         <h4>Mata Uang</h4>
         <select id="currencySelect">
@@ -398,10 +344,8 @@ input:checked + .slider { transform: translateX(24px); background: var(--green);
     </div>
   </div>
 
-  <!-- Floating Action Button -->
   <div class="fab" id="fabAdd">+</div>
 
-  <!-- Bottom Navigation -->
   <div class="bottom-nav">
     <div class="nav-item active" data-page="home">
       <svg fill="currentColor" viewBox="0 0 20 20"><path d="M10 2L3 7v11a1 1 0 001 1h3v-5h6v5h3a1 1 0 001-1V7z"/></svg>
@@ -417,14 +361,11 @@ input:checked + .slider { transform: translateX(24px); background: var(--green);
     </div>
   </div>
 
-  <!-- Modal Tambah Transaksi -->
+  <!-- Modal Tambah -->
   <div id="modalAdd" class="modal-overlay hidden" style="display:none;">
     <form id="txForm" class="modal-card" style="max-height:90vh; overflow-y:auto;">
       <h3 style="margin-bottom:15px;">➕ Transaksi Baru</h3>
-      <select id="type" required>
-        <option value="income">Pemasukan</option>
-        <option value="expense">Pengeluaran</option>
-      </select>
+      <select id="type" required><option value="income">Pemasukan</option><option value="expense">Pengeluaran</option></select>
       <input type="number" id="amount" placeholder="Jumlah" required>
       <input type="text" id="desc" placeholder="Keterangan">
       <select id="categorySelect" required></select>
@@ -435,14 +376,11 @@ input:checked + .slider { transform: translateX(24px); background: var(--green);
     </form>
   </div>
 
-  <!-- Modal Edit Transaksi -->
+  <!-- Modal Edit -->
   <div id="modalEdit" class="modal-overlay hidden" style="display:none;">
     <form id="editForm" class="modal-card">
       <h3 style="margin-bottom:15px;">✏️ Edit Transaksi</h3>
-      <select id="editType" required>
-        <option value="income">Pemasukan</option>
-        <option value="expense">Pengeluaran</option>
-      </select>
+      <select id="editType" required><option value="income">Pemasukan</option><option value="expense">Pengeluaran</option></select>
       <input type="number" id="editAmount" placeholder="Jumlah" required>
       <input type="text" id="editDesc" placeholder="Keterangan">
       <select id="editCategory" required></select>
@@ -471,7 +409,7 @@ let currency = localStorage.getItem('currency') || 'JPY';
 let theme = localStorage.getItem('theme') || 'light';
 let chartInstance = null;
 
-// Format
+// Format mata uang
 const currencyFormatters = {
   JPY: new Intl.NumberFormat('ja-JP', { style: 'currency', currency: 'JPY', maximumFractionDigits: 0 }),
   IDR: new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 })
@@ -480,20 +418,20 @@ const formatMoney = (num) => currencyFormatters[currency].format(num || 0);
 const getMonth = () => new Date().toISOString().slice(0, 7);
 const monthNames = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
 
-// Inisialisasi
+// Inisialisasi tema & mata uang
 document.documentElement.setAttribute('data-theme', theme);
 document.getElementById('currencySelect').value = currency;
 document.getElementById('themeToggle').checked = theme === 'dark';
 document.getElementById('todayDate').textContent = `${new Date().getDate()} ${monthNames[new Date().getMonth()]} ${new Date().getFullYear()}`;
 setGreeting();
 
-// Jalankan
-init();
+// Pastikan seluruh DOM siap
+document.addEventListener('DOMContentLoaded', init);
 
 function init() {
   bindEvents();
   checkUser();
-  updateCategoryDropdowns(); // awal
+  updateCategoryDropdowns();
 }
 
 function updateCategoryDropdowns() {
@@ -515,7 +453,6 @@ function updateCategoryDropdowns() {
 
   typeSelect.addEventListener('change', populateCategories);
   editTypeSelect.addEventListener('change', populateEditCategories);
-  // panggil langsung untuk inisialisasi pertama
   populateCategories();
   populateEditCategories();
 }
@@ -526,7 +463,7 @@ function setGreeting() {
   document.getElementById('greeting').textContent = greet;
 }
 
-// Toast neumorphism
+// Toast
 function showToast(message, type = 'success') {
   const container = document.getElementById('toastContainer');
   const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : '⚠️';
@@ -542,7 +479,7 @@ function removeToast(toast) {
   setTimeout(() => toast.remove(), 300);
 }
 
-// Loading overlay
+// Loading
 function showLoading(text = 'Memproses...') {
   document.getElementById('loadingText').textContent = text;
   document.getElementById('loadingOverlay').classList.add('show');
@@ -551,27 +488,29 @@ function hideLoading() {
   document.getElementById('loadingOverlay').classList.remove('show');
 }
 
-// Event utama
+// ---------- BINDING SEMUA EVENT ----------
 function bindEvents() {
-  document.getElementById('btnLogin').onclick = login;
-  document.getElementById('btnSignUp').onclick = signup;
-  document.getElementById('btnLogout').onclick = logout;
-  document.getElementById('btnSaveCurrency').onclick = saveCurrency;
-  document.getElementById('themeToggle').onchange = toggleTheme;
-  document.getElementById('btnSetBudget').onclick = setBudget;
-  document.getElementById('fabAdd').onclick = showAddModal;
-  document.getElementById('btnCloseModal').onclick = hideAddModal;
-  document.getElementById('btnCloseEditModal').onclick = hideEditModal;
+  // LOGIN & DAFTAR – pakai addEventListener agar pasti jalan
+  document.getElementById('btnLogin').addEventListener('click', login);
+  document.getElementById('btnSignUp').addEventListener('click', signup);
+
+  document.getElementById('btnLogout').addEventListener('click', logout);
+  document.getElementById('btnSaveCurrency').addEventListener('click', saveCurrency);
+  document.getElementById('themeToggle').addEventListener('change', toggleTheme);
+  document.getElementById('btnSetBudget').addEventListener('click', setBudget);
+  document.getElementById('fabAdd').addEventListener('click', showAddModal);
+  document.getElementById('btnCloseModal').addEventListener('click', hideAddModal);
+  document.getElementById('btnCloseEditModal').addEventListener('click', hideEditModal);
   document.getElementById('txForm').addEventListener('submit', addTransaction);
   document.getElementById('editForm').addEventListener('submit', updateTransaction);
-  document.getElementById('exportCSVBtn').onclick = exportCSV;
-  document.getElementById('exportImageBtn').onclick = exportImageReport;
+  document.getElementById('exportCSVBtn').addEventListener('click', exportCSV);
+  document.getElementById('exportImageBtn').addEventListener('click', exportImageReport);
   document.getElementById('searchInput').addEventListener('input', renderTransactions);
   document.getElementById('filterMonth').addEventListener('change', renderTransactions);
   document.getElementById('filterCategory').addEventListener('change', renderTransactions);
-  document.getElementById('clearFilterBtn').onclick = clearFilters;
+  document.getElementById('clearFilterBtn').addEventListener('click', clearFilters);
 
-  // Event delegation untuk edit & delete
+  // Delegasi Edit & Delete
   document.getElementById('listTransaksi').addEventListener('click', function(e) {
     const target = e.target;
     if (target.classList.contains('btn-edit') || target.classList.contains('btn-delete')) {
@@ -586,7 +525,7 @@ function bindEvents() {
     }
   });
 
-  // Navigasi
+  // Navigasi bawah
   document.querySelectorAll('.nav-item').forEach(item => {
     item.addEventListener('click', () => switchPage(item.dataset.page));
   });
@@ -620,9 +559,7 @@ function switchPage(page) {
 function showAddModal() {
   document.getElementById('modalAdd').classList.remove('hidden');
   document.getElementById('modalAdd').style.display = 'flex';
-  // reset kategori sesuai tipe awal
-  const typeSelect = document.getElementById('type');
-  typeSelect.dispatchEvent(new Event('change'));
+  document.getElementById('type').dispatchEvent(new Event('change'));
 }
 function hideAddModal() {
   document.getElementById('modalAdd').classList.add('hidden');
@@ -635,7 +572,7 @@ function hideEditModal() {
   document.getElementById('modalEdit').style.display = 'none';
 }
 
-// Auth
+// ---------- AUTH ----------
 async function checkUser() {
   const { data } = await supabase.auth.getUser();
   if (data.user) { currentUser = data.user; showApp(); loadData(); }
@@ -676,7 +613,7 @@ async function logout() {
   showToast('Logout berhasil');
 }
 
-// Budget
+// ---------- BUDGET ----------
 async function setBudget() {
   const amount = parseFloat(document.getElementById('budgetAmount').value);
   if (!amount || amount <= 0) return showToast('Masukkan jumlah valid', 'warn');
@@ -694,7 +631,7 @@ async function setBudget() {
   showToast('Budget bulan ini disimpan!');
 }
 
-// Data
+// ---------- DATA ----------
 async function loadData() {
   const { data } = await supabase.from('transactions').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: false });
   allTransactions = data || [];
@@ -748,7 +685,7 @@ function checkBudgetNotification() {
   if (budget > 0 && spent/budget >= 0.9) showToast(`⚠️ Pengeluaran sudah ${Math.round((spent/budget)*100)}% dari budget`, 'warn');
 }
 
-// Transaksi: filter
+// ---------- TRANSAKSI ----------
 function populateFilterOptions() {
   const months = new Set();
   allTransactions.forEach(t => { if(t.created_at) months.add(t.created_at.slice(0,7)); });
@@ -806,7 +743,6 @@ function clearFilters() {
   renderTransactions();
 }
 
-// Operasi transaksi
 async function addTransaction(e) {
   e.preventDefault();
   const payload = {
@@ -848,11 +784,10 @@ async function updateTransaction(e) {
   showToast('Transaksi diperbarui!');
 }
 
-// Edit & Delete with fallback
+// ---------- EDIT & DELETE (dengan fallback) ----------
 async function editTransactionPrompt(id) {
   let tx = allTransactions.find(t => t.id === id);
   if (!tx) {
-    // fallback to database
     const { data, error } = await supabase.from('transactions').select('*').eq('id', id).eq('user_id', currentUser.id).single();
     if (error || !data) {
       showToast('Data transaksi tidak ditemukan', 'error');
@@ -864,7 +799,6 @@ async function editTransactionPrompt(id) {
   document.getElementById('editType').value = tx.type;
   document.getElementById('editAmount').value = tx.amount;
   document.getElementById('editDesc').value = tx.desc || '';
-  // set category dropdown
   const editCatSelect = document.getElementById('editCategory');
   const categories = tx.type === 'income' ? incomeCategories : expenseCategories;
   editCatSelect.innerHTML = categories.map(c => `<option value="${c}" ${tx.category===c?'selected':''}>${c}</option>`).join('');
@@ -883,7 +817,7 @@ async function deleteTransaction(id) {
   showToast('Transaksi dihapus');
 }
 
-// Export
+// ---------- EXPORT ----------
 function exportCSV() {
   const filtered = getFilteredTransactions();
   if (!filtered.length) return showToast('Tidak ada data', 'warn');
