@@ -395,6 +395,9 @@ input:checked + .slider { transform: translateX(24px); background: var(--green);
 
 <script>
 // ==================== APP LOGIC ====================
+if (!window.__appInit) {
+  window.__appInit = true;
+
 const SUPABASE_URL = 'https://wjzvnwkmmglgimamspwc.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_nfxU1mTiDHhQgDG_1U6eTQ_-7ePLctc';
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
