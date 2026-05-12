@@ -61,7 +61,7 @@ body { background: var(--bg); color: var(--text); padding-bottom: 90px; transiti
 .mini-card.red.amt { color: #dc2626; }
 .mini-card.icon { font-size: 20px; }
 
-.btn { padding: 12px 16px; border-radius: 12px; border: none; font-weight: 600; cursor: pointer; color: white; transition: 0.2s; }
+.btn { padding: 12px 16px; border-radius: 12px; border: none; font-weight: 600; cursor: pointer; color: white; transition: 0.2s; position: relative; }
 .btn:hover { transform: scale(1.02); }
 .btn.green { background: var(--green); }
 .btn.outline { background: transparent; border: 1.5px solid var(--border); color: var(--text); }
@@ -97,9 +97,60 @@ input:checked ~.switch { background: var(--green); }
 .progress-bar.danger { background: var(--danger); }
 
 .badge { display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; background: rgba(16,185,129,0.15); color: var(--green); }
+
+/* Toast Notification */
+.toast-container {
+  position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+  z-index: 9999; display: flex; flex-direction: column; gap: 10px;
+  width: calc(100% - 40px); max-width: 400px; pointer-events: none;
+}
+.toast {
+  background: var(--card); color: var(--text); padding: 14px 18px; border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15); border-left: 4px solid var(--green);
+  display: flex; align-items: center; gap: 10px; opacity: 0; transform: translateY(-20px);
+  animation: slideDown 0.3s ease forwards; pointer-events: auto;
+}
+.toast.error { border-left-color: var(--red); }
+.toast.warn { border-left-color: var(--warn); }
+@keyframes slideDown {
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes slideUp {
+  to { opacity: 0; transform: translateY(-20px); }
+}
+.toast-icon { font-size: 20px; }
+.toast-close { margin-left: auto; cursor: pointer; opacity: 0.6; }
+.toast-close:hover { opacity: 1; }
+
+/* Loading Modal */
+.loading-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 9998;
+  display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px);
+  opacity: 0; pointer-events: none; transition: opacity 0.2s;
+}
+.loading-overlay.show { opacity: 1; pointer-events: all; }
+.loading-box {
+  background: var(--card); padding: 30px 40px; border-radius: 20px; text-align: center;
+  transform: scale(0.9); transition: transform 0.2s;
+}
+.loading-overlay.show.loading-box { transform: scale(1); }
+.spinner {
+  width: 48px; height: 48px; border: 4px solid var(--border); border-top-color: var(--green);
+  border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 16px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text { font-weight: 600; color: var(--text); }
 </style>
 </head>
 <body>
+
+<div class="toast-container" id="toastContainer"></div>
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-box">
+    <div class="spinner"></div>
+    <div class="loading-text" id="loadingText">Loading...</div>
+  </div>
+</div>
 
 <div id="authPage" class="container">
   <div class="card" style="text-align:center; padding:30px 20px;">
@@ -325,17 +376,49 @@ if (!window.__appInit) {
     });
   }
 
+  // Toast & Loading Functions
+  function showToast(message, type = 'success') {
+    const container = document.getElementById('toastContainer');
+    const icon = type === 'error'? '❌' : type === 'warn'? '⚠️' : '✅';
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.innerHTML = `
+      <span class="toast-icon">${icon}</span>
+      <span>${message}</span>
+      <span class="toast-close">✕</span>
+    `;
+    container.appendChild(toast);
+
+    toast.querySelector('.toast-close').onclick = () => removeToast(toast);
+    setTimeout(() => removeToast(toast), 3000);
+  }
+
+  function removeToast(toast) {
+    toast.style.animation = 'slideUp 0.3s ease forwards';
+    setTimeout(() => toast.remove(), 300);
+  }
+
+  function showLoading(text = 'Loading...') {
+    document.getElementById('loadingText').textContent = text;
+    document.getElementById('loadingOverlay').classList.add('show');
+  }
+
+  function hideLoading() {
+    document.getElementById('loadingOverlay').classList.remove('show');
+  }
+
   function toggleTheme() {
     theme = document.getElementById('themeToggle').checked? 'dark' : 'light';
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('theme', theme);
+    showToast(theme === 'dark'? 'Dark Mode Aktif' : 'Light Mode Aktif');
   }
 
   function saveCurrency() {
     currency = document.getElementById('currencySelect').value;
     localStorage.setItem('currency', currency);
     renderAll();
-    alert('Mata uang diubah ke ' + currency);
+    showToast('Mata uang diubah ke ' + currency);
   }
 
   function switchPage(page) {
@@ -361,31 +444,40 @@ if (!window.__appInit) {
   }
 
   async function login() {
+    showLoading('Masuk ke akun...');
     const { data, error } = await supabase.auth.signInWithPassword({
       email: document.getElementById('email').value,
       password: document.getElementById('password').value
     });
-    if (error) alert(error.message);
+    hideLoading();
+    if (error) showToast(error.message, 'error');
     else {
       currentUser = data.user;
       showApp();
       loadData();
+      showToast('Login berhasil! Selamat datang');
     }
   }
 
   async function signup() {
+    showLoading('Membuat akun...');
     const { error } = await supabase.auth.signUp({
       email: document.getElementById('email').value,
       password: document.getElementById('password').value
     });
-    alert(error? error.message : 'Daftar sukses! Silakan login.');
+    hideLoading();
+    if (error) showToast(error.message, 'error');
+    else showToast('Daftar sukses! Cek email untuk verifikasi', 'success');
   }
 
   async function logout() {
+    showLoading('Keluar...');
     await supabase.auth.signOut();
+    hideLoading();
     currentUser = null;
     document.getElementById('authPage').classList.remove('hidden');
     document.getElementById('appPage').classList.add('hidden');
+    showToast('Berhasil logout');
   }
 
   async function setBudget() {
@@ -395,20 +487,22 @@ if (!window.__appInit) {
     const end = `${month}-31T23:59:59.999Z`;
 
     if (!amount || amount <= 0) {
-      alert('Masukkan jumlah budget yang valid');
+      showToast('Masukkan jumlah budget yang valid', 'warn');
       return;
     }
 
+    showLoading('Menyimpan budget...');
     const { error: delErr } = await supabase
-     .from('transactions')
-     .delete()
-     .eq('user_id', currentUser.id)
-     .eq('type', 'budget')
-     .gte('created_at', start)
-     .lte('created_at', end);
+    .from('transactions')
+    .delete()
+    .eq('user_id', currentUser.id)
+    .eq('type', 'budget')
+    .gte('created_at', start)
+    .lte('created_at', end);
 
     if (delErr) {
-      alert('Gagal hapus budget lama: ' + delErr.message);
+      hideLoading();
+      showToast('Gagal hapus budget lama: ' + delErr.message, 'error');
       return;
     }
 
@@ -421,20 +515,21 @@ if (!window.__appInit) {
       created_at: start
     }]);
 
-    if (error) alert('Gagal simpan budget: ' + error.message);
+    hideLoading();
+    if (error) showToast('Gagal simpan budget: ' + error.message, 'error');
     else {
       document.getElementById('budgetAmount').value = '';
       await loadData();
-      alert('Budget bulan ' + month + ' disimpan!');
+      showToast('Budget bulan ' + month + ' disimpan!', 'success');
     }
   }
 
   async function loadData() {
     const { data } = await supabase
-     .from('transactions')
-     .select('*')
-     .eq('user_id', currentUser.id)
-     .order('created_at', { ascending: false });
+    .from('transactions')
+    .select('*')
+    .eq('user_id', currentUser.id)
+    .order('created_at', { ascending: false });
 
     allTransactions = data || [];
     renderAll();
@@ -461,8 +556,8 @@ if (!window.__appInit) {
     });
 
     const spentThisMonth = allTransactions
-     .filter(t => t.type === 'expense' && t.created_at.startsWith(month))
-     .reduce((a, b) => a + b.amount, 0);
+    .filter(t => t.type === 'expense' && t.created_at.startsWith(month))
+    .reduce((a, b) => a + b.amount, 0);
 
     const percent = budget? Math.min(100, (spentThisMonth / budget) * 100) : 0;
     const barClass = percent > 80? 'danger' : percent > 60? 'warn' : '';
@@ -476,7 +571,7 @@ if (!window.__appInit) {
     document.getElementById('countHariIni').textContent = todayCount;
 
     document.getElementById('budgetList').innerHTML = budget > 0
-     ? `<div style="margin-bottom:6px;">Limit: ${formatMoney(budget)} | Terpakai: ${formatMoney(spentThisMonth)}</div>
+    ? `<div style="margin-bottom:6px;">Limit: ${formatMoney(budget)} | Terpakai: ${formatMoney(spentThisMonth)}</div>
          <div class="progress">
            <div class="progress-bar ${barClass}" style="width:${percent}%"></div>
          </div>`
@@ -488,9 +583,9 @@ if (!window.__appInit) {
     if (!svg) return;
 
     const last7 = allTransactions
-     .filter(t => t.type!== 'budget')
-     .slice(0,7)
-     .reverse();
+    .filter(t => t.type!== 'budget')
+    .slice(0,7)
+    .reverse();
 
     if (last7.length < 2) {
       svg.innerHTML = '';
@@ -510,8 +605,8 @@ if (!window.__appInit) {
   function renderTransactions() {
     let html = '';
     allTransactions
-     .filter(t => t.type!== 'budget')
-     .forEach(t => {
+    .filter(t => t.type!== 'budget')
+    .forEach(t => {
         const sign = t.type === 'income'? '+' : '-';
         const color = t.type === 'income'? 'green' : 'red';
         const icon = t.type === 'income'? '📈' : '📉';
@@ -549,20 +644,24 @@ if (!window.__appInit) {
     };
 
     if (payload.amount <= 0) {
-      alert('Jumlah harus lebih dari 0');
+      showToast('Jumlah harus lebih dari 0', 'warn');
       isSaving = false;
       document.getElementById('btnAdd').disabled = false;
       return;
     }
 
+    showLoading('Menyimpan transaksi...');
     const { error } = await supabase.from('transactions').insert([payload]);
-    if (error) alert(error.message);
+    hideLoading();
+
+    if (error) showToast(error.message, 'error');
     else {
       document.getElementById('amount').value = '';
       document.getElementById('desc').value = '';
       document.getElementById('modalAdd').classList.add('hidden');
       await loadData();
       switchPage('home');
+      showToast('Transaksi berhasil ditambahkan!', 'success');
     }
 
     isSaving = false;
