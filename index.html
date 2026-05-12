@@ -28,136 +28,54 @@ body { background: var(--bg); color: var(--text); padding-bottom: 90px; transiti
 .container { max-width: 500px; margin: 0 auto; padding: 16px; animation: fadeIn 0.4s ease; }
 @keyframes fadeIn { from {opacity:0; transform: translateY(10px);} to {opacity:1; transform: translateY(0);} }
 
-.header-wrap {
-  display: flex; justify-content: space-between; align-items: center;
-  margin: 8px 0 20px;
-}
+.header-wrap { display: flex; justify-content: space-between; align-items: center; margin: 8px 0 20px; }
 .header { font-size: 22px; font-weight: 700; }
 .greeting { font-size: 13px; color: var(--subtext); }
 .date { font-size: 12px; color: var(--subtext); }
 
-.card {
-  background: var(--card); border-radius: 18px; padding: 18px; margin-bottom: 14px;
-  box-shadow: var(--shadow); border: 1px solid var(--border);
-  transition: transform 0.2s, box-shadow 0.2s;
-}
+.card { background: var(--card); border-radius: 18px; padding: 18px; margin-bottom: 14px; box-shadow: var(--shadow); border: 1px solid var(--border); transition: transform 0.2s, box-shadow 0.2s; }
 .card:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,0.12); }
-.card.green {
-  background: linear-gradient(135deg, #10b981, #059669); color: white; border: none;
-  position: relative; overflow: hidden;
-}
-[data-theme="dark"].card.green {
-  background: linear-gradient(135deg, #059669, #047857);
-}
+.card.green { background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; position: relative; overflow: hidden; }
+[data-theme="dark"].card.green { background: linear-gradient(135deg, #059669, #047857); }
 .card.green h1 { font-size: 34px; font-weight: 700; margin: 6px 0; }
 
-.sparkline {
-  width: 100%; height: 40px; margin-top: 8px; opacity: 0.9;
-}
-
+.sparkline { width: 100%; height: 40px; margin-top: 8px; opacity: 0.9; }
 .row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; }
 .row +.row { border-top: 1px solid var(--border); }
 .label { display: flex; align-items: center; gap: 8px; color: var(--subtext); font-weight: 500; }
 .value.green { color: var(--green); font-weight: 700; }
 .value.red { color: var(--red); font-weight: 700; }
-
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
-.mini-card {
-  background: var(--card);
-  border-radius: 16px;
-  padding: 14px;
-  border: 2px solid var(--border);
-  transition: 0.2s;
-}
+.mini-card { background: var(--card); border-radius: 16px; padding: 14px; border: 2px solid var(--border); transition: 0.2s; }
 .mini-card:hover { transform: translateY(-2px); }
-
-.mini-card.green {
-  border-color: #10b981;
-  background: #ecfdf5;
-}
-.mini-card.red {
-  border-color: #ef4444;
-  background: #fef2f2;
-}
-[data-theme="dark"].mini-card.green {
-  border-color: #34d399;
-  background: #064e3b;
-}
-[data-theme="dark"].mini-card.red {
-  border-color: #f87171;
-  background: #7f1d1d;
-}
-.mini-card.label {
-  color: #374151;
-  font-size: 13px;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-[data-theme="dark"].mini-card.label {
-  color: #e2e8f0;
-}
-.mini-card.amt {
-  font-size: 20px;
-  font-weight: 700;
-  margin-top: 4px;
-}
+.mini-card.green { border-color: #10b981; background: #ecfdf5; }
+.mini-card.red { border-color: #ef4444; background: #fef2f2; }
+[data-theme="dark"].mini-card.green { border-color: #34d399; background: #064e3b; }
+[data-theme="dark"].mini-card.red { border-color: #f87171; background: #7f1d1d; }
+.mini-card.label { color: #374151; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+[data-theme="dark"].mini-card.label { color: #e2e8f0; }
+.mini-card.amt { font-size: 20px; font-weight: 700; margin-top: 4px; }
 [data-theme="dark"].mini-card.amt { color: #ffffff; }
 .mini-card.green.amt { color: #059669; }
 .mini-card.red.amt { color: #dc2626; }
 .mini-card.icon { font-size: 20px; }
 
-.btn {
-  padding: 12px 16px; border-radius: 12px; border: none; font-weight: 600; cursor: pointer;
-  color: white; transition: 0.2s;
-}
+.btn { padding: 12px 16px; border-radius: 12px; border: none; font-weight: 600; cursor: pointer; color: white; transition: 0.2s; }
 .btn:hover { transform: scale(1.02); }
 .btn.green { background: var(--green); }
-.btn.outline {
-  background: transparent; border: 1.5px solid var(--border); color: var(--text);
-}
+.btn.outline { background: transparent; border: 1.5px solid var(--border); color: var(--text); }
 .btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
-.fab {
-  position: fixed;
-  bottom: 90px;
-  right: 20px;
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background: var(--green);
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 28px;
-  box-shadow: 0 6px 16px rgba(16,185,129,0.4);
-  cursor: pointer;
-  z-index: 100;
-  transition: 0.2s;
-}
+.fab { position: fixed; bottom: 90px; right: 20px; width: 56px; height: 56px; border-radius: 50%; background: var(--green); color: white; display: flex; align-items: center; justify-content: center; font-size: 28px; box-shadow: 0 6px 16px rgba(16,185,129,0.4); cursor: pointer; z-index: 100; transition: 0.2s; }
 .fab:hover { transform: scale(1.1); }
 
-.bottom-nav {
-  position: fixed; bottom: 0; left: 0; right: 0; background: var(--card);
-  display: flex; justify-content: space-around; padding: 12px 0;
-  box-shadow: 0 -4px 12px rgba(0,0,0,0.1); border-top: 1px solid var(--border);
-  backdrop-filter: blur(10px);
-}
-.nav-item {
-  text-align: center; font-size: 12px; color: var(--subtext); cursor: pointer;
-  transition: 0.2s;
-}
+.bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card); display: flex; justify-content: space-around; padding: 12px 0; box-shadow: 0 -4px 12px rgba(0,0,0,0.1); border-top: 1px solid var(--border); backdrop-filter: blur(10px); }
+.nav-item { text-align: center; font-size: 12px; color: var(--subtext); cursor: pointer; transition: 0.2s; }
 .nav-item.active { color: var(--green); transform: scale(1.05); }
 .nav-item svg { width: 24px; height: 24px; margin-bottom: 2px; }
 
-input, select {
-  width: 100%; padding: 13px; margin: 8px 0; border-radius: 12px;
-  border: 1.5px solid var(--border); background: var(--bg); color: var(--text);
-  font-size: 15px;
-}
+input, select { width: 100%; padding: 13px; margin: 8px 0; border-radius: 12px; border: 1.5px solid var(--border); background: var(--bg); color: var(--text); font-size: 15px; }
 input:focus, select:focus { outline: none; border-color: var(--green); }
 input::placeholder { color: var(--subtext); }
 
@@ -166,41 +84,19 @@ input::placeholder { color: var(--subtext); }
 .page { display: none; }
 .page.active { display: block; }
 
-.toggle {
-  display: flex; align-items: center; justify-content: space-between;
-}
-.switch {
-  position: relative; width: 54px; height: 30px; background: var(--border);
-  border-radius: 999px; cursor: pointer; transition: 0.3s;
-}
+.toggle { display: flex; align-items: center; justify-content: space-between; }
+.switch { position: relative; width: 54px; height: 30px; background: var(--border); border-radius: 999px; cursor: pointer; transition: 0.3s; }
 .switch input { display: none; }
-.slider {
-  position: absolute; top: 3px; left: 3px; width: 24px; height: 24px;
-  background: white; border-radius: 50%; transition: 0.3s;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-}
+.slider { position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; background: white; border-radius: 50%; transition: 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
 input:checked +.slider { transform: translateX(24px); }
 input:checked ~.switch { background: var(--green); }
 
-.progress {
-  height: 10px; background: var(--border); border-radius: 6px; overflow: hidden; margin-top: 8px;
-}
-.progress-bar {
-  height: 100%; background: var(--green); transition: width 0.5s ease;
-  border-radius: 6px;
-}
+.progress { height: 10px; background: var(--border); border-radius: 6px; overflow: hidden; margin-top: 8px; }
+.progress-bar { height: 100%; background: var(--green); transition: width 0.5s ease; border-radius: 6px; }
 .progress-bar.warn { background: var(--warn); }
 .progress-bar.danger { background: var(--danger); }
 
-.badge {
-  display: inline-block;
-  padding: 4px 10px;
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 600;
-  background: rgba(16,185,129,0.15);
-  color: var(--green);
-}
+.badge { display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; background: rgba(16,185,129,0.15); color: var(--green); }
 </style>
 </head>
 <body>
@@ -239,7 +135,7 @@ input:checked ~.switch { background: var(--green); }
 
       <div class="card">
         <div style="font-weight:600; margin-bottom:10px; display:flex; justify-content:space-between;">
-          <span>$ Breakdown Keseluruhan</span>
+          <span>📊 Breakdown Keseluruhan</span>
           <span style="font-size:12px; color:var(--subtext);">All time</span>
         </div>
         <div class="row">
@@ -326,7 +222,6 @@ input:checked ~.switch { background: var(--green); }
     </div>
   </div>
 
-  <!-- Floating Action Button -->
   <div class="fab" id="fabAdd">+</div>
 
   <div class="bottom-nav">
@@ -344,7 +239,6 @@ input:checked ~.switch { background: var(--green); }
     </div>
   </div>
 
-  <!-- Modal Tambah Transaksi -->
   <div id="modalAdd" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:200; display:flex; align-items:center; justify-content:center; padding:20px;">
     <form id="txForm" class="card" style="width:100%; max-width:400px;">
       <h4 style="margin-bottom:12px;">Tambah Transaksi</h4>
@@ -424,9 +318,7 @@ if (!window.__appInit) {
       document.getElementById('modalAdd').classList.add('hidden');
     };
 
-    const txForm = document.getElementById('txForm');
-    txForm.removeEventListener('submit', addTransaction);
-    txForm.addEventListener('submit', addTransaction);
+    document.getElementById('txForm').addEventListener('submit', addTransaction);
 
     document.querySelectorAll('.nav-item').forEach(item => {
       item.onclick = () => switchPage(item.dataset.page);
@@ -508,12 +400,12 @@ if (!window.__appInit) {
     }
 
     const { error: delErr } = await supabase
-  .from('transactions')
-  .delete()
-  .eq('user_id', currentUser.id)
-  .eq('type', 'budget')
-  .gte('created_at', start)
-  .lte('created_at', end);
+     .from('transactions')
+     .delete()
+     .eq('user_id', currentUser.id)
+     .eq('type', 'budget')
+     .gte('created_at', start)
+     .lte('created_at', end);
 
     if (delErr) {
       alert('Gagal hapus budget lama: ' + delErr.message);
@@ -539,10 +431,10 @@ if (!window.__appInit) {
 
   async function loadData() {
     const { data } = await supabase
-  .from('transactions')
-  .select('*')
-  .eq('user_id', currentUser.id)
-  .order('created_at', { ascending: false });
+     .from('transactions')
+     .select('*')
+     .eq('user_id', currentUser.id)
+     .order('created_at', { ascending: false });
 
     allTransactions = data || [];
     renderAll();
@@ -553,7 +445,7 @@ if (!window.__appInit) {
     const month = getMonth();
     let income = 0, expense = 0, budget = 0;
     let todayIncome = 0, todayExpense = 0;
-    const today = new Date().toISOString().split('T')[0];
+    const todayStr = new Date().toISOString().split('T')[0];
     let todayCount = 0;
 
     allTransactions.forEach(t => {
@@ -561,7 +453,7 @@ if (!window.__appInit) {
       else if (t.type === 'expense') expense += t.amount;
       else if (t.type === 'budget' && t.created_at.startsWith(month)) budget = t.amount;
 
-      if (t.created_at.startsWith(today)) {
+      if (t.created_at.startsWith(todayStr)) {
         todayCount++;
         if (t.type === 'income') todayIncome += t.amount;
         else if (t.type === 'expense') todayExpense += t.amount;
@@ -569,8 +461,8 @@ if (!window.__appInit) {
     });
 
     const spentThisMonth = allTransactions
-  .filter(t => t.type === 'expense' && t.created_at.startsWith(month))
-  .reduce((a, b) => a + b.amount, 0);
+     .filter(t => t.type === 'expense' && t.created_at.startsWith(month))
+     .reduce((a, b) => a + b.amount, 0);
 
     const percent = budget? Math.min(100, (spentThisMonth / budget) * 100) : 0;
     const barClass = percent > 80? 'danger' : percent > 60? 'warn' : '';
@@ -584,10 +476,10 @@ if (!window.__appInit) {
     document.getElementById('countHariIni').textContent = todayCount;
 
     document.getElementById('budgetList').innerHTML = budget > 0
-  ? `<div style="margin-bottom:6px;">Limit: ${formatMoney(budget)} | Terpakai: ${formatMoney(spentThisMonth)}</div>
+     ? `<div style="margin-bottom:6px;">Limit: ${formatMoney(budget)} | Terpakai: ${formatMoney(spentThisMonth)}</div>
          <div class="progress">
            <div class="progress-bar ${barClass}" style="width:${percent}%"></div>
-       </div>`
+         </div>`
       : '<div>Belum ada budget bulan ini</div>';
   }
 
@@ -618,8 +510,8 @@ if (!window.__appInit) {
   function renderTransactions() {
     let html = '';
     allTransactions
-  .filter(t => t.type!== 'budget')
-  .forEach(t => {
+     .filter(t => t.type!== 'budget')
+     .forEach(t => {
         const sign = t.type === 'income'? '+' : '-';
         const color = t.type === 'income'? 'green' : 'red';
         const icon = t.type === 'income'? '📈' : '📉';
