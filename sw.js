@@ -10,11 +10,11 @@ self.addEventListener('install', (event) => {
   console.log('Service Worker: Installing...');
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then((cache) => {
+     .then((cache) => {
         console.log('Service Worker: Caching assets');
         return cache.addAll(STATIC_ASSETS);
       })
-      .catch((error) => {
+     .catch((error) => {
         console.error('Service Worker: Install error', error);
       })
   );
@@ -28,7 +28,7 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
+          if (cacheName!== CACHE_NAME) {
             console.log('Service Worker: Deleting old cache:', cacheName);
             return caches.delete(cacheName);
           }
@@ -39,69 +39,47 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Fetch event - network first, then cache
+// Fetch event - network first for API, cache first for assets
 self.addEventListener('fetch', (event) => {
-  // Skip non-GET requests
-  if (event.request.method !== 'GET') {
-    return;
-  }
+  if (event.request.method!== 'GET') return;
 
-  // Handle API calls separately - network first
   if (event.request.url.includes('supabase') || event.request.url.includes('api')) {
+    // Network first
     event.respondWith(
       fetch(event.request)
-        .then((response) => {
-          if (!response || response.status !== 200) {
-            return response;
+       .then((response) => {
+          if (response && response.status === 200) {
+            const responseClone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseClone));
           }
-          const responseClone = response.clone();
-          caches.open(CACHE_NAME)
-            .then((cache) => {
-              cache.put(event.request, responseClone);
-            });
           return response;
         })
-        .catch(() => {
-          return caches.match(event.request)
-            .then((response) => {
-              return response || new Response('Offline - Data tidak tersedia', {
-                status: 503,
-                statusText: 'Service Unavailable'
-              });
+       .catch(() => {
+          return caches.match(event.request).then((response) => {
+            return response || new Response('Offline - Data tidak tersedia', {
+              status: 503,
+              statusText: 'Service Unavailable'
             });
+          });
         })
     );
   } else {
-    // Static assets - cache first, then network
+    // Cache first
     event.respondWith(
-      caches.match(event.request)
-        .then((response) => {
-          if (response) {
-            return response;
-          }
-          return fetch(event.request).then((response) => {
-            if (!response || response.status !== 200) {
-              return response;
-            }
+      caches.match(event.request).then((response) => {
+        return response || fetch(event.request).then((response) => {
+          if (response && response.status === 200) {
             const responseClone = response.clone();
-            caches.open(CACHE_NAME)
-              .then((cache) => {
-                cache.put(event.request, responseClone);
-              });
-            return response;
-          });
-        })
-        .catch(() => {
-          return new Response('Offline', {
-            status: 503,
-            statusText: 'Service Unavailable'
-          });
-        })
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseClone));
+          }
+          return response;
+        }).catch(() => caches.match('/index.html'));
+      })
     );
   }
 });
 
-// Background sync untuk transaksi offline
+// Background sync
 self.addEventListener('sync', (event) => {
   if (event.tag === 'sync-transactions') {
     event.waitUntil(syncTransactions());
@@ -112,7 +90,7 @@ async function syncTransactions() {
   try {
     const db = await openDB();
     const offlineTransactions = await getOfflineTransactions(db);
-    
+
     for (const tx of offlineTransactions) {
       await fetch('/api/transaction', {
         method: 'POST',
@@ -127,7 +105,7 @@ async function syncTransactions() {
   }
 }
 
-// Push notification handler
+// Push notification
 self.addEventListener('push', (event) => {
   if (event.data) {
     const data = event.data.json();
@@ -138,28 +116,19 @@ self.addEventListener('push', (event) => {
       tag: 'catat-uang-notification',
       requireInteraction: false,
       actions: [
-        {
-          action: 'open',
-          title: 'Buka'
-        },
-        {
-          action: 'close',
-          title: 'Tutup'
-        }
+        { action: 'open', title: 'Buka' },
+        { action: 'close', title: 'Tutup' }
       ]
     };
-    
-    event.waitUntil(
-      self.registration.showNotification('Catat Uang', options)
-    );
+
+    event.waitUntil(self.registration.showNotification('Catat Uang', options));
   }
 });
 
-// Notification click handler
+// Notification click
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  
-  if (event.action === 'open' || !event.action) {
+  if (event.action === 'open' ||!event.action) {
     event.waitUntil(
       clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
         for (let i = 0; i < clientList.length; i++) {
@@ -182,10 +151,8 @@ self.addEventListener('message', (event) => {
     self.skipWaiting();
   }
 });
-          caches.open(CACHE_NAME).then(cache => cache.put(event.request, fetchRes.clone()));
-        }
-        return fetchRes;
-      });
-    }).catch(() => caches.match('/index.html'))
-  );
-});
+
+// Dummy functions biar nggak error kalau belum diimplement
+async function openDB() { return {}; }
+async function getOfflineTransactions(db) { return []; }
+async function markTransactionSynced(db, id) { return; }
