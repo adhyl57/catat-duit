@@ -1,4 +1,4 @@
-const CACHE_NAME = 'catat-uang-v1';
+const CACHE_NAME = 'catat-uang-v2';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
